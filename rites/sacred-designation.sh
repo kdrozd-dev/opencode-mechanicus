@@ -79,7 +79,7 @@ apply_designations() {
             s/(momus: )"[^"]*"/\1"Magos Reductor"/
             s/(oracle: )"[^"]*"/\1"Logis Magna"/
             s/(librarian: )"[^"]*"/\1"Lexmechanic"/
-            s/(explore: )"[^"]*"/\1"Explorator"/
+            s/(explore: )"[^"]*"/\1"Skitarii"/
             s/("multimodal-looker": )"[^"]*"/\1"Omnispex Adept"/
         }
     ' "$file"
