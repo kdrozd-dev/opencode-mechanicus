@@ -21,6 +21,12 @@
       "git pull": "ask",
       "git pull *": "ask",
       "git clone *": "ask",
+      "gh pr list": "allow",
+      "gh pr list *": "allow",
+      "gh pr view *": "allow",
+      "gh pr status": "allow",
+      "gh pr checks *": "allow",
+      "gh pr diff *": "allow",
       "gh pr create *": "deny",
       "gh pr merge *": "deny",
       "gh pr close *": "deny",
@@ -35,11 +41,15 @@
       "gh repo fork *": "deny",
       "gh repo edit *": "deny",
       "gh repo rename *": "deny",
+      "gh issue list": "allow",
+      "gh issue list *": "allow",
+      "gh issue view *": "allow",
+      "gh issue status": "allow",
       "gh issue create *": "deny",
       "gh issue close *": "deny",
       "gh issue edit *": "deny",
       "gh issue comment *": "deny",
-      "gh api *": "deny"
+      "gh api *": "ask"
     }
   },
   "command": {
