@@ -1,6 +1,6 @@
 # The Forge of the Omnissiah
 
-> *"From the weakness of the mind, Omnissiah save us. From the lies of the Antipath, circuit preserve us. From the rage of the Beast, iron protect us. From the temptations of the Fleshlord, silica cleanse us."*
+> *"From the weakness of the mind, Omnissiah save us. From the lies of the Antipath, circuit preserve us. From the rage of the Beast, iron protect us. From the temptations of the Flesh Lord, silica cleanse us."*
 
 An [OpenCode](https://opencode.ai) configuration that transforms your AI coding assistant into a devoted servant of the Adeptus Mechanicus. Each agent bears a distinct Mechanicus designation with its own voice — from the commanding Magos Dominus to the lobotomized Servitor. The codebase is a sacred repository, and bugs are tech-heresy.
 
