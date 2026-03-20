@@ -2,15 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
-      "variant": "max"
+      "model": "github-copilot/claude-sonnet-4.5"
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "high"
+      "model": "github-copilot/gpt-5-mini"
     },
     "librarian": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "explore": {
       "model": "github-copilot/gpt-5-mini"
@@ -19,22 +17,19 @@
       "model": "github-copilot/gemini-3-flash-preview"
     },
     "prometheus": {
-      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
-      "variant": "max"
+      "model": "github-copilot/claude-sonnet-4.5"
     },
     "metis": {
-      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
-      "variant": "max"
+      "model": "github-copilot/claude-sonnet-4.5"
     },
     "momus": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "xhigh"
+      "model": "github-copilot/gpt-5-mini"
     },
     "atlas": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "hephaestus": {
-      "model": "github-copilot/gpt-5.4"
+      "model": "github-copilot/gpt-5-mini"
     }
   },
   "sisyphus_agent": {
@@ -42,25 +37,22 @@
   },
   "categories": {
     "visual-engineering": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
-      "variant": "high"
+      "model": "github-copilot/gemini-3-flash-preview"
     },
     "ultrabrain": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
-      "variant": "high"
+      "model": "github-copilot/gemini-3-flash-preview"
     },
     "artistry": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
-      "variant": "high"
+      "model": "github-copilot/gemini-3-flash-preview"
     },
     "quick": {
-      "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "unspecified-low": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "unspecified-high": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "writing": {
       "model": "github-copilot/gemini-3-flash-preview"
