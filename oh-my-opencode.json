@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": {
+      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
+      "variant": "max"
+    },
+    "oracle": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high"
+    },
+    "librarian": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "explore": {
+      "model": "github-copilot/gpt-5-mini"
+    },
+    "multimodal-looker": {
+      "model": "github-copilot/gemini-3-flash-preview"
+    },
+    "prometheus": {
+      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
+      "variant": "max"
+    },
+    "metis": {
+      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
+      "variant": "max"
+    },
+    "momus": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "xhigh"
+    },
+    "atlas": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "hephaestus": {
+      "model": "github-copilot/gpt-5.4"
+    }
+  },
+  "sisyphus_agent": {
+    "replace_plan": false
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "ultrabrain": {
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "artistry": {
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "quick": {
+      "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0"
+    },
+    "unspecified-low": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "unspecified-high": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "writing": {
+      "model": "github-copilot/gemini-3-flash-preview"
+    }
+  }
+}
+ 

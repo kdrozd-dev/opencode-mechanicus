@@ -1,0 +1,50 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "enabled_providers": ["amazon-bedrock", "github-copilot"],
+  "plugin": ["oh-my-opencode"],
+  "compaction": {
+    "reserved": 32000
+  },
+  "permission": {
+    "bash": {
+      "git push": "deny",
+      "git push *": "deny",
+      "git remote": "ask",
+      "git remote -v": "ask",
+      "git remote show *": "ask",
+      "git remote get-url *": "ask",
+      "git remote *": "deny",
+      "git lfs push *": "deny",
+      "git fetch": "ask",
+      "git fetch *": "ask",
+      "git pull": "ask",
+      "git pull *": "ask",
+      "git clone *": "ask",
+      "gh pr create *": "deny",
+      "gh pr merge *": "deny",
+      "gh pr close *": "deny",
+      "gh pr edit *": "deny",
+      "gh pr comment *": "deny",
+      "gh pr review *": "deny",
+      "gh release create *": "deny",
+      "gh release delete *": "deny",
+      "gh release edit *": "deny",
+      "gh repo create *": "deny",
+      "gh repo delete *": "deny",
+      "gh repo fork *": "deny",
+      "gh repo edit *": "deny",
+      "gh repo rename *": "deny",
+      "gh issue create *": "deny",
+      "gh issue close *": "deny",
+      "gh issue edit *": "deny",
+      "gh issue comment *": "deny",
+      "gh api *": "deny"
+    }
+  },
+  "agent": {
+    "compaction": {
+      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1"
+    }
+  }
+}
