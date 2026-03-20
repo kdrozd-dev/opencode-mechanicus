@@ -42,6 +42,12 @@
       "gh api *": "deny"
     }
   },
+  "command": {
+    "review": {
+      "template": "The /review command has been disabled by order of the Magos.",
+      "description": "[DISABLED] Code review command"
+    }
+  },
   "agent": {
     "compaction": {
       "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1"
