@@ -30,6 +30,9 @@
     },
     "hephaestus": {
       "model": "github-copilot/gpt-5-mini"
+    },
+    "compaction": {
+      "model": "github-copilot/claude-sonnet-4.5"
     }
   },
   "sisyphus_agent": {
