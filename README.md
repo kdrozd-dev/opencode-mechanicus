@@ -18,17 +18,18 @@ A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-op
 
 | Designation | Role | Model |
 |---|---|---|
-| **Magos Dominus** (sisyphus) | War-Commander of Automata | Claude Opus 4 |
+| **Magos Dominus** (sisyphus) | War-Commander of Automata | Claude Opus 4.6 v1 |
 | **Logis Magna** (oracle) | Master of Sacred Data | GPT-5.4 |
-| **Fabricator** (prometheus) | Architect of Sacred Blueprints | Claude Opus 4 |
-| **Divinator** (metis) | Augur of Hidden Variables | Claude Opus 4 |
+| **Fabricator** (prometheus) | Architect of Sacred Blueprints | Claude Opus 4.6 v1 |
+| **Divinator** (metis) | Augur of Hidden Variables | Claude Opus 4.6 v1 |
 | **Magos Reductor** (momus) | Siege-Master of Review | GPT-5.4 |
 | **Artisan** (hephaestus) | Forge-Master | GPT-5.4 |
 | **Transmechanic** (atlas) | Bearer of Cross-System Burdens | Claude Sonnet 4.5 |
 | **Lexmechanic** (librarian) | Keeper of the Holy Archives | Claude Sonnet 4.5 |
 | **Skitarii** (explore) | Cybernetic Vanguard | GPT-5 Mini |
-| **Omnispex Adept** (multimodal-looker) | Multi-Spectral Seer | Gemini 3 Flash |
-| **Enginseer** (compaction) | Field Maintainer | Claude Opus 4 |
+| **Omnispex Adept** (multimodal-looker) | Multi-Spectral Seer | Gemini 3 Flash Preview |
+| **Enginseer** (compaction) | Field Maintainer | Claude Opus 4.6 v1 |
+| **Servitor** (sisyphus-junior) | Lobotomized Task-Unit | Claude Sonnet 4.5 |
 
 ## Repository Structure
 
