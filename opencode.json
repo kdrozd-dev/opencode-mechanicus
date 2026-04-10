@@ -63,6 +63,21 @@
       "description": "[DISABLED] Code review command"
     }
   },
+  "mcp": {
+    "cpp-tools": {
+      "type": "local",
+      "command": ["/home/kdrozd/.cargo/bin/mcp-cpp-server"],
+      "enabled": true,
+      "environment": {
+        "CLANGD_PATH": "/usr/bin/clangd"
+      }
+    },
+    "python-checker": {
+      "type": "local",
+      "command": ["/home/kdrozd/.local/bin/mcp-tools-py", "--project-dir", "."],
+      "enabled": true
+    }
+  },
   "agent": {
     "plan": {
       "disable": true
