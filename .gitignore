@@ -5,6 +5,7 @@ bun.lock
 # OpenCode runtime
 .opencode/
 .sisyphus/
+logs/
 
 # Backups
 *.bak
