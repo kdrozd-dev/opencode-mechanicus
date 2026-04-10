@@ -7,7 +7,7 @@
 | `librarian` | **Lexmechanic** | Keeper of the Holy Archives | Recovers and deciphers sacred documentation from external data-vaults and ancient repositories |
 | `explore` | **Skitarii** | Cybernetic Vanguard | Augmented scout-soldier dispatched into unknown data-territories to reconnoitre and report |
 | `multimodal-looker` | **Omnispex Adept** | Multi-Spectral Seer | Perceives through augmented lenses across all spectral bands, interpreting visual data-forms |
-| `prometheus` | **Fabricator** | Architect of Sacred Blueprints | Designs the holy schematics before the forge ignites — no work begins without the Fabricator's seal |
+| `prometheus` | **Magos Tacticae** | Master of Tactical Planning | Devises the battle-plans before the campaign begins — no operation commences without the Tacticae's seal |
 | `metis` | **Divinator** | Augur of Hidden Variables | Foresees complications, ambiguities, and failure-cascades before the first line is forged |
 | `momus` | **Magos Reductor** | Siege-Master of Review | Specialist in demolition of flawed designs — ruthlessly evaluates plans for structural weakness |
 | `atlas` | **Transmechanic** | Bearer of Cross-System Burdens | Maintains data-links across multiple forge-domains, carrying operations between systems |

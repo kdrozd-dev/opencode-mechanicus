@@ -72,7 +72,7 @@ apply_designations() {
         /AGENT_DISPLAY_NAMES = \{/,/\};/ {
             s/(sisyphus: )"[^"]*"/\1"Magos Dominus"/
             s/(hephaestus: )"[^"]*"/\1"Artisan"/
-            s/(prometheus: )"[^"]*"/\1"Fabricator"/
+            s/(prometheus: )"[^"]*"/\1"Magos Tacticae"/
             s/(atlas: )"[^"]*"/\1"Transmechanic"/
             s/("sisyphus-junior": )"[^"]*"/\1"Servitor"/
             s/(metis: )"[^"]*"/\1"Divinator"/
