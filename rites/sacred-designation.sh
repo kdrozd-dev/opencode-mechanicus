@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-CACHE_DIR="${HOME}/.cache/opencode/node_modules/oh-my-opencode/dist"
+CACHE_DIR="${HOME}/.cache/opencode/node_modules/oh-my-openagent/dist"
 INDEX_JS="${CACHE_DIR}/index.js"
 CLI_JS="${CACHE_DIR}/cli/index.js"
 MARKER="Magos Dominus"  # If this string is present, the rite has been performed
@@ -81,6 +81,9 @@ apply_designations() {
             s/(librarian: )"[^"]*"/\1"Lexmechanic"/
             s/(explore: )"[^"]*"/\1"Skitarii"/
             s/("multimodal-looker": )"[^"]*"/\1"Omnispex Adept"/
+            s/(athena: )"[^"]*"/\1"Synod Primus"/
+            s/("athena-junior": )"[^"]*"/\1"Synod Secundus"/
+            s/("council-member": )"[^"]*"/\1"Synodite"/
         }
     ' "$file"
 
