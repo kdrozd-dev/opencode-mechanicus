@@ -74,7 +74,7 @@
     },
     "python-checker": {
       "type": "local",
-      "command": ["/home/kdrozd/.local/bin/mcp-tools-py", "--project-dir", "."],
+      "command": ["/home/kdrozd/.local/bin/mcp-tools-py", "--project-dir", ".", "--venv-path", "/home/kdrozd/native_pytorch_dev/pytorch_native_venv"],
       "enabled": true
     }
   },
