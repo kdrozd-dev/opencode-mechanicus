@@ -5,3 +5,6 @@ bun.lock
 
 # OpenCode runtime
 .opencode/
+
+# Backups
+*.bak
