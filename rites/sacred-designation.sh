@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-CACHE_DIR="${HOME}/.cache/opencode/node_modules/oh-my-openagent/dist"
+CACHE_DIR="${HOME}/.config/opencode/node_modules/oh-my-openagent/dist"
 INDEX_JS="${CACHE_DIR}/index.js"
 CLI_JS="${CACHE_DIR}/cli/index.js"
 MARKER="Magos Dominus"  # If this string is present, the rite has been performed

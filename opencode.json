@@ -6,7 +6,7 @@
     "github-copilot"
   ],
   "plugin": [
-    "oh-my-openagent"
+    "./node_modules/oh-my-openagent"
   ],
   "compaction": {
     "reserved": 32000
