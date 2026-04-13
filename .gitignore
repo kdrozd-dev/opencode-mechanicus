@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 bun.lock
+.venv/
 
 # OpenCode runtime
 .opencode/
