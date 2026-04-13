@@ -12,6 +12,17 @@
     "reserved": 32000
   },
   "permission": {
+    "gtax": {
+      "gtax_reservations_create": "ask",
+      "gtax_reservation_extend": "ask",
+      "gtax_client_recovery_imageloader": "ask",
+      "gtax_client_provision_start": "ask",
+      "gtax_client_recovery_start": "ask",
+      "gtax_job_submit": "ask",
+      "gtax_client_property_update": "ask",
+      "gtax_client_property_delete": "ask",
+      "gtax_network_switch": "ask"
+    },
     "bash": {
       "git push": "deny",
       "git push *": "deny",
@@ -75,6 +86,11 @@
     "python-checker": {
       "type": "local",
       "command": ["/home/kdrozd/.config/opencode/.venv/bin/mcp-tools-py", "--project-dir", ".", "--venv-path", "/home/kdrozd/native_pytorch_dev/pytorch_native_venv"],
+      "enabled": true
+    },
+    "gtax": {
+      "type": "local",
+      "command": ["/usr/local/bin/gnai", "toolkits", "serve", "--stdio", "gtax"],
       "enabled": true
     }
   },
