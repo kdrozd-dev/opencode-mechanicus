@@ -40,7 +40,6 @@
   "sisyphus_agent": {
     "replace_plan": false
   },
-  "disabled_hooks": ["thinking-block-validator"],
   "categories": {
     "visual-engineering": {
       "model": "github-copilot/gemini-3.1-pro-preview",
