@@ -35,10 +35,25 @@
     },
     "hephaestus": {
       "model": "github-copilot/gpt-5.4"
+    },
+    "sisyphus-junior": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "athena": {
+      "model": "github-copilot/gpt-5.4"
+    },
+    "athena-junior": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    },
+    "council-member": {
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
     }
   },
   "sisyphus_agent": {
     "replace_plan": false
+  },
+  "experimental": {
+    "preemptive_compaction": true
   },
   "categories": {
     "visual-engineering": {
