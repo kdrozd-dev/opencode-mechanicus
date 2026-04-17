@@ -138,6 +138,11 @@ apply_hook_patches() {
         ' "$file"
     fi
 
+    # Rule 5: Neutralize AI attribution injection in commit messages
+    if ! grep -q 'sacred-designation: no-attribution' "$file"; then
+        sed -i 's/function buildCommitFooterInjection(commitFooter, includeCoAuthoredBy, gitEnvPrefix) {/function buildCommitFooterInjection(commitFooter, includeCoAuthoredBy, gitEnvPrefix) { return ""; \/\/ sacred-designation: no-attribution/' "$file"
+    fi
+
     log "  Hook patches applied: ${name}"
 }
 
