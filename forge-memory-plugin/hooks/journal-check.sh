@@ -2,35 +2,38 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  FORGE MEMORY — JOURNAL COMPLIANCE CHECK (Stop Hook)
 #  ────────────────────────────────────────────────────
-#  Fires on every AI Stop event. Checks for compliance gap:
-#    completed todos this session  > 0
-#    AND journal entries written    = 0
-#  → inject_prompt asking AI to write entries before closing.
+#  Fires on every AI Stop event. Detects non-trivial work via session
+#  transcript tool-call count (threshold: ≥3 tool_use entries).
+#  Does NOT rely on todos — works even when Dominus skips todo creation.
 #
-#  Stdin: JSON { session_id, todo_path, cwd, hook_event_name, ... }
+#  Stdin: JSON { session_id, transcript_path, cwd, hook_event_name, ... }
 #  Stdout: JSON { decision?, inject_prompt? }
-#  Exit 0: normal (allow/inject)
-#  Exit 2: block (hard block — NOT used here)
+#  Exit 0: allow / inject
+#  Exit 2: hard block (not used)
 # ══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 FORGE_SCRIPT="${HOME}/.config/opencode/rites/forge-memory.sh"
+TRANSCRIPT_DIR="${HOME}/.claude/transcripts"
+TOOL_CALL_THRESHOLD=3
 
-# ── Read stdin ────────────────────────────────────────────────────────────────
+# ── Parse stdin ───────────────────────────────────────────────────────────────
 stdin_data="$(cat)"
 
-# ── Parse todo_path from stdin ────────────────────────────────────────────────
-todo_path="$(printf '%s' "$stdin_data" | grep -o '"todo_path":"[^"]*"' | head -1 | sed 's/"todo_path":"//;s/"//')"
+session_id="$(printf '%s' "$stdin_data" | grep -o '"session_id":"[^"]*"' | head -1 | sed 's/"session_id":"//;s/"//')"
+cwd="$(printf '%s' "$stdin_data" | grep -o '"cwd":"[^"]*"' | head -1 | sed 's/"cwd":"//;s/"//')"
 
-# ── Count completed todos ─────────────────────────────────────────────────────
-completed_todos=0
-if [[ -n "$todo_path" && -f "$todo_path" ]]; then
-  # Count todos with status "completed" in the JSON array
-  completed_todos="$(grep -o '"status":"completed"' "$todo_path" 2>/dev/null | wc -l | tr -d ' ')" || completed_todos=0
+# ── Count tool calls in session transcript ────────────────────────────────────
+tool_calls=0
+if [[ -n "$session_id" ]]; then
+  transcript="${TRANSCRIPT_DIR}/${session_id}.jsonl"
+  if [[ -f "$transcript" ]]; then
+    tool_calls="$(grep -c '"type":"tool_use"' "$transcript" 2>/dev/null)" || tool_calls=0
+  fi
 fi
 
-# No completed todos → nothing to enforce
-if [[ "$completed_todos" -eq 0 ]]; then
+# Below threshold → trivial session, no enforcement
+if [[ "$tool_calls" -lt "$TOOL_CALL_THRESHOLD" ]]; then
   printf '{}\n'
   exit 0
 fi
@@ -38,22 +41,22 @@ fi
 # ── Count journal entries written in last 90 minutes ─────────────────────────
 new_entries=0
 if [[ -x "$FORGE_SCRIPT" ]]; then
-  tasks_dir="$("$FORGE_SCRIPT" path --tasks 2>/dev/null)" || tasks_dir=""
+  tasks_dir="$( cd "${cwd:-$HOME}" 2>/dev/null && "$FORGE_SCRIPT" path --tasks 2>/dev/null )" || tasks_dir=""
   if [[ -n "$tasks_dir" && -d "$tasks_dir" ]]; then
-    new_entries="$(find "$tasks_dir" -name "*.md" -newer /proc/1 -mmin -90 -type f 2>/dev/null | wc -l | tr -d ' ')" || new_entries=0
+    new_entries="$(find "$tasks_dir" -name "*.md" -mmin -90 -type f 2>/dev/null | wc -l | tr -d ' ')" || new_entries=0
   fi
 fi
 
-# ── Compliance gap check ───────────────────────────────────────────────────────
-# completed todos exist but zero journal entries written this session
-if [[ "$new_entries" -eq 0 ]]; then
-  msg="You completed ${completed_todos} task(s) this session but wrote no forge-memory journal entries."
-  msg="${msg} Run \`bash ~/.config/opencode/rites/forge-memory.sh new <slug>\` for each non-trivial task"
-  msg="${msg} and fill in Goal/Outcome/Notes before this session closes. Skip only if all completed tasks were trivial (<2 tool calls)."
-  printf '{"decision":"block","inject_prompt":"%s"}\n' "$msg"
+# Entries exist → compliant
+if [[ "$new_entries" -gt 0 ]]; then
+  printf '{}\n'
   exit 0
 fi
 
-# Entries exist → compliant
-printf '{}\n'
+# ── Gap detected: inject reminder ─────────────────────────────────────────────
+msg="You used ${tool_calls} tools this session but wrote no forge-memory journal entries."
+msg="${msg} Run \`bash ~/.config/opencode/rites/forge-memory.sh new <slug>\` for each non-trivial task"
+msg="${msg} and fill in Goal/Outcome/Notes before this session closes."
+msg="${msg} Skip only if all work was trivial (<3 tool calls total per task)."
+printf '{"decision":"block","inject_prompt":"%s"}\n' "$msg"
 exit 0
