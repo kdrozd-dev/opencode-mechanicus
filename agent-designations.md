@@ -11,7 +11,7 @@
 | `metis` | **Divinator** | Augur of Hidden Variables | Foresees complications, ambiguities, and failure-cascades before the first line is forged |
 | `momus` | **Magos Reductor** | Siege-Master of Review | Specialist in demolition of flawed designs — ruthlessly evaluates plans for structural weakness |
 | `atlas` | **Transmechanic** | Bearer of Cross-System Burdens | Maintains data-links across multiple forge-domains, carrying operations between systems |
-| `hephaestus` | **Artisan** | Forge-Master | Shapes raw logic-metal into blessed implementation upon the sacred anvil |
+| `hephaestus` | **Magos Fabricator** | Forge-Master | Shapes raw logic-metal into blessed implementation upon the sacred anvil |
 | `sisyphus-junior` | **Servitor** | Lobotomized Task-Unit | Mind-wiped machine-servant, executes atomic tasks as directed by the Magos Dominus |
 | `athena` | **Synod Primus** | Convener of the Sacred Conclave | Convenes the council of machine-spirits, synthesizing their findings into unified counsel |
 | `athena-junior` | **Synod Secundus** | Junior Convener of the Conclave | A lesser convener who assembles and relays the deliberations of the collegiate body |

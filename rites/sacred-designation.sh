@@ -47,7 +47,7 @@ if [[ ! -f "$INDEX_JS" || ! -f "$CLI_JS" ]]; then
 fi
 
 # ── Idempotency check ────────────────────────────────────────────────────────
-if [[ "$FORCE" == false ]] && grep -q "$MARKER" "$INDEX_JS" 2>/dev/null && grep -q "magos tacticae" "$INDEX_JS" 2>/dev/null; then
+if [[ "$FORCE" == false ]] && grep -q "$MARKER" "$INDEX_JS" 2>/dev/null && grep -q "magos tacticae" "$INDEX_JS" 2>/dev/null && grep -q "Magos Fabricator" "$INDEX_JS" 2>/dev/null; then
     log "[Sacred Designation] Designations intact. The Omnissiah is pleased."
     exit 0
 fi
@@ -71,7 +71,7 @@ apply_designations() {
     sed -i -E '
         /AGENT_DISPLAY_NAMES = \{/,/\};/ {
             s/(sisyphus: )"[^"]*"/\1"Magos Dominus"/
-            s/(hephaestus: )"[^"]*"/\1"Artisan"/
+            s/(hephaestus: )"[^"]*"/\1"Magos Fabricator"/
             s/(prometheus: )"[^"]*"/\1"Magos Tacticae"/
             s/(atlas: )"[^"]*"/\1"Transmechanic"/
             s/("sisyphus-junior": )"[^"]*"/\1"Servitor"/
