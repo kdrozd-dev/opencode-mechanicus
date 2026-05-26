@@ -15,7 +15,7 @@ set -euo pipefail
 
 FORGE_SCRIPT="${HOME}/.config/opencode/rites/forge-memory.sh"
 TRANSCRIPT_DIR="${HOME}/.claude/transcripts"
-TOOL_CALL_THRESHOLD=3
+TOOL_CALL_THRESHOLD=10
 
 # ── Parse stdin ───────────────────────────────────────────────────────────────
 stdin_data="$(cat)"
