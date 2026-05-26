@@ -14,7 +14,7 @@ Karpathy compiler model: raw `tasks/*.md` (source) → AI compiler → these wik
 
 ## Source vs. Executable
 - `tasks/*.md` = raw source (immutable until pruned). These wiki files = compiled output (Compile Pass only).
-- The `<!-- last-compiled: ... -->` marker tracks when the AI last synthesized new sources.
+- The HTML-comment marker on line 5 above tracks when the AI last synthesized new sources.
 
 ## Journal Entry Template
 ```markdown
