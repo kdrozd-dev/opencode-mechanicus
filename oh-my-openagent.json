@@ -1,53 +1,46 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "disabled_hooks": [],
   "agents": {
     "sisyphus": {
-      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6",
       "variant": "max"
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.4",
+      "model": "github-copilot/gpt-5.5",
       "variant": "high"
     },
     "librarian": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
     },
     "explore": {
-      "model": "github-copilot/gpt-5-mini"
+      "model": "github-copilot/gpt-5.4-mini"
     },
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash-preview"
     },
     "prometheus": {
-      "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
-      "variant": "max"
+      "model": "amazon-bedrock/us.anthropic.claude-opus-4-7",
+      "variant": "xhigh"
     },
     "metis": {
       "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1",
-      "variant": "max"
+      "variant": "xhigh"
     },
     "momus": {
-      "model": "github-copilot/gpt-5.4",
+      "model": "github-copilot/gpt-5.5",
       "variant": "xhigh"
     },
     "atlas": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
     },
     "hephaestus": {
-      "model": "github-copilot/gpt-5.4"
+      "model": "github-copilot/gpt-5.5"
     },
     "sisyphus-junior": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
     },
-    "athena": {
-      "model": "github-copilot/gpt-5.4"
-    },
-    "athena-junior": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    },
-    "council-member": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    }
+
   },
   "sisyphus_agent": {
     "replace_plan": false
@@ -72,10 +65,14 @@
       "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0"
     },
     "unspecified-low": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
     },
     "unspecified-high": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+    },
+    "deep": {
+      "model": "amazon-bedrock/us.anthropic.claude-opus-4-7",
+      "variant": "xhigh"
     },
     "writing": {
       "model": "github-copilot/gemini-3-flash-preview"
