@@ -6,7 +6,8 @@
     "github-copilot"
   ],
   "plugin": [
-    "./node_modules/oh-my-openagent"
+    "./node_modules/oh-my-openagent",
+    "./node_modules/@tarquinen/opencode-dcp",
   ],
   "compaction": {
     "reserved": 32000
@@ -65,7 +66,15 @@
       "gh issue close *": "deny",
       "gh issue edit *": "deny",
       "gh issue comment *": "deny",
-      "gh api *": "ask"
+      "gh api -X POST *": "ask",
+      "gh api -X PUT *": "ask",
+      "gh api -X DELETE *": "ask",
+      "gh api -X PATCH *": "ask",
+      "gh api --method POST *": "ask",
+      "gh api --method PUT *": "ask",
+      "gh api --method DELETE *": "ask",
+      "gh api --method PATCH *": "ask",
+      "gh api *": "allow"
     }
   },
   "command": {
@@ -91,7 +100,7 @@
     "gtax": {
       "type": "local",
       "command": ["/usr/local/bin/gnai", "toolkits", "serve", "--stdio", "gtax"],
-      "enabled": true
+      "enabled": false
     }
   },
   "agent": {
@@ -99,7 +108,7 @@
       "disable": true
     },
     "compaction": {
-      "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      "model": "github-copilot/gpt-5.5"
     }
   }
 }

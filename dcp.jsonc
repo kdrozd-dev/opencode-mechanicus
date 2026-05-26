@@ -1,0 +1,84 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+
+  // ─── Core ────────────────────────────────────────────────────────────────
+  "enabled": true,
+  "debug": false,
+
+  // ─── Autonomous Mode ──────────────────────────────────────────────────────
+  // Model receives soft compression nudges at threshold boundaries.
+  // Combined with 60% trigger threshold (BKM: "compact at 60% not 90%"),
+  // this achieves token efficiency without manual intervention.
+  "manualMode": {
+    "enabled": false,
+    "automaticStrategies": true
+  },
+
+  // ─── Notifications: Out of Conversation Flow ─────────────────────────────
+  // Toast notifications (system-level) instead of chat messages — the model
+  // never sees pruning events and is not influenced by them.
+  "pruneNotification": "minimal",
+  "pruneNotificationType": "toast",
+
+  // ─── Compress Tool Configuration ─────────────────────────────────────────
+  "compress": {
+    "mode": "range",
+    "permission": "allow",
+    "showCompression": false,
+    "summaryBuffer": true,
+
+    // ─── Thresholds (BKM: trigger at 60%, floor at 40%) ─────────────────
+    // Above max: strong nudges fire every nudgeFrequency fetches.
+    // Between min and max: soft iteration-based reminders only.
+    // Below min: no nudging — free to work uninterrupted.
+    "maxContextLimit": "60%",
+    "minContextLimit": "40%",
+
+    // Per-model overrides — smaller context windows trigger earlier.
+    "modelMaxLimits": {
+      "github-copilot/gpt-5.4-mini":                                                "50%",
+      "github-copilot/gemini-3-flash-preview":                                      "50%",
+      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             "55%",
+      "amazon-bedrock/global.anthropic.claude-sonnet-4-6":                          "60%",
+      "github-copilot/gpt-5.5":                                                     "60%",
+      "github-copilot/gemini-3.1-pro-preview":                                      "60%",
+      "amazon-bedrock/us.anthropic.claude-opus-4-7":                                "65%"
+    },
+    "modelMinLimits": {
+      "github-copilot/gpt-5.4-mini":                                                "30%",
+      "github-copilot/gemini-3-flash-preview":                                      "30%",
+      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             "35%"
+    },
+
+    // ─── Nudge Behavior ─────────────────────────────────────────────────────
+    // nudgeFrequency: Fire context-limit nudge every Nth LLM fetch (default 5).
+    //   Lower = more aggressive, higher = less distraction.
+    // iterationNudgeThreshold: Start iteration nudges after N messages since
+    //   last user message. Prevents premature compression during long chains.
+    // nudgeForce: "soft" = gentle suggestion, "strong" = firm compression push.
+    //   With 60% threshold already low, "soft" suffices.
+    "nudgeFrequency": 5,
+    "iterationNudgeThreshold": 12,
+    "nudgeForce": "soft"
+  },
+
+  // ─── Experimental ────────────────────────────────────────────────────────
+  // allowSubAgents: Enriches task tool outputs with subagent final messages
+  // on every LLM request. Fetches subagent session, extracts last assistant
+  // text (+ compress summary if present), merges into <task_result> block.
+  "experimental": {
+    "allowSubAgents": true
+  },
+
+  // ─── Automatic Strategies ────────────────────────────────────────────────
+  // Always-on housekeeping on the message array before LLM requests.
+  "strategies": {
+    "deduplication": {
+      "enabled": true
+    },
+    "purgeErrors": {
+      "enabled": true,
+      "turns": 4
+    }
+  }
+}
