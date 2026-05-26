@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.4.3",
-    "oh-my-openagent": "^3.17.4"
+    "@opencode-ai/plugin": "^1.14.22",
+    "@tarquinen/opencode-dcp": "^3.1.9",
+    "oh-my-openagent": "^4.2.3",
+    "opencode-vibeguard": "^0.1.0"
   }
 }
