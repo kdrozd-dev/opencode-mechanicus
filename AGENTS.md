@@ -251,3 +251,23 @@ This forge-world uses git submodules in certain repositories. When reviewing cha
 ## Forge-World Characteristics
 
 > **No XPU Device (2026-04-10):** This forge-world has **no Intel XPU (discrete GPU) device** installed. Do NOT attempt to run any scripts, tests, benchmarks, or workloads that target XPU hardware (`intel_extension_for_pytorch`, `xpu` device targets, `sycl` runtimes, etc.). Any command referencing XPU execution will fail. If a task involves XPU code, limit your work to **editing, reviewing, and static analysis only** — never invoke or execute it locally.
+
+## Forge Memory Protocol
+
+Persistent memory follows Karpathy's compiler model: raw `tasks/*.md` (source) → AI compiler → topical wiki files (executable). All managed by `bash ~/.config/opencode/rites/forge-memory.sh`.
+
+### Autonomous Triggers (run without being asked)
+- **On session start (first tool use)**: run `bash ~/.config/opencode/rites/forge-memory.sh autostart`. If output line `needs-compile: yes` appears, immediately invoke skill `forge-memory` and follow the Compile Pass workflow.
+- **After every 5 new journal entries** in current project: same — invoke skill `forge-memory` Compile Pass.
+
+### Knowledge (read on demand)
+- Always-loaded TOC: `~/.config/opencode/.forge/knowledge/_index.md` (global) and `<project-wiki>/_index.md` (per-project)
+- Topical files (load via Read when relevant): `learnings.md`, `patterns.md`, `gotchas.md`, `decisions.md`, `tools.md`, `open-questions.md`
+- Topical files are COMPILED OUTPUT — write only via Compile Pass workflow, not raw appends
+
+### Task Journal (write on completion)
+- On non-trivial task completion: run `bash ~/.config/opencode/rites/forge-memory.sh new <slug>` — it prints stub path
+- Edit that stub to follow template in `_index.md` (≤25 lines, frontmatter + Goal/Outcome/Notes bullets)
+- Skip if task was trivial (<2 tool calls)
+- Per-project storage is out-of-tree at `~/.local/share/opencode-forge/{project-key}/` — never inside foreign repos
+- Reports/pruning: `bash ~/.config/opencode/rites/forge-memory.sh report 7d` or `prune --dry-run`

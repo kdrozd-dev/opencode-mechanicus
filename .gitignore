@@ -10,3 +10,6 @@ logs/
 
 # Backups
 *.bak
+
+# Forge memory — defense-in-depth: tasks should never be in this repo, but ignore them if accidentally created here
+.forge/tasks/
