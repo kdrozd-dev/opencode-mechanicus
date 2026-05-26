@@ -8,6 +8,7 @@
   "plugin": [
     "./node_modules/oh-my-openagent",
     "./node_modules/@tarquinen/opencode-dcp",
+    "./forge-memory-plugin"
   ],
   "compaction": {
     "reserved": 32000
