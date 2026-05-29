@@ -258,12 +258,16 @@ Persistent memory follows Karpathy's compiler model: raw `tasks/*.md` (source) �
 
 ### Autonomous Triggers (run without being asked)
 - **On session start (first tool use)**: run `bash ~/.config/opencode/rites/forge-memory.sh autostart`. If output line `needs-compile: yes` appears, immediately invoke skill `forge-memory` and follow the Compile Pass workflow.
+- **On session start**: immediately Read `~/.config/opencode/.forge/knowledge/_index.md` (global) AND the per-project `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/_index.md` if it exists. These are mandatory reads, not optional.
 - **After every 5 new journal entries** in current project: same — invoke skill `forge-memory` Compile Pass.
 
-### Knowledge (read on demand)
-- Always-loaded TOC: `~/.config/opencode/.forge/knowledge/_index.md` (global) and `<project-wiki>/_index.md` (per-project)
-- Topical files (load via Read when relevant): `learnings.md`, `patterns.md`, `gotchas.md`, `decisions.md`, `tools.md`, `open-questions.md`
-- Topical files are COMPILED OUTPUT — write only via Compile Pass workflow, not raw appends
+### Knowledge (proactive — load before acting)
+- **Before any implementation task**: Read `patterns.md` and `gotchas.md` for the current project wiki. Check for prior decisions in `decisions.md`.
+- **Before debugging**: Read `gotchas.md` first — known pitfalls are recorded there.
+- **Before using a tool/library**: Read `tools.md` for accumulated tool-specific knowledge.
+- **When something seems surprising or wrong**: Read `open-questions.md` — contradictions are flagged there.
+- Topical files live at `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/topics/` (per-project) or `~/.config/opencode/.forge/knowledge/` (global).
+- Topical files are COMPILED OUTPUT — write only via Compile Pass workflow, not raw appends.
 
 ### Task Journal (write on completion)
 - On non-trivial task completion: run `bash ~/.config/opencode/rites/forge-memory.sh new <slug>` — it prints stub path
