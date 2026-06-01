@@ -1,5 +1,7 @@
 {
   "name": "forge-memory-plugin",
   "version": "1.0.0",
-  "description": "Stop hook enforcing forge-memory journal compliance"
+  "description": "opencode session.idle plugin enforcing forge-memory journal compliance",
+  "type": "module",
+  "main": "index.js"
 }
