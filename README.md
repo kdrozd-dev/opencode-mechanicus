@@ -6,11 +6,10 @@ An [OpenCode](https://opencode.ai) configuration that transforms your AI coding 
 
 ## What This Is
 
-A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) configuration that:
+A shareable OpenCode + [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) configuration that:
 
 - **Applies the Cult Mechanicus persona** to all AI agents via `AGENTS.md`
 - **Assigns Mechanicus designations** to every agent in the forge-network
-- **Patches agent display names** in the oh-my-opencode UI via `rites/sacred-designation.sh`
 - **Configures provider routing** across Amazon Bedrock and GitHub Copilot models
 - **Enforces operational discipline** with granular permission controls on git and GitHub CLI operations
 
@@ -20,16 +19,13 @@ A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-op
 |---|---|---|
 | **Magos Dominus** (sisyphus) | War-Commander of Automata | Claude Opus 4.6 v1 |
 | **Logis Magna** (oracle) | Master of Sacred Data | GPT-5.4 |
-| **Fabricator** (prometheus) | Architect of Sacred Blueprints | Claude Opus 4.6 v1 |
-| **Divinator** (metis) | Augur of Hidden Variables | Claude Opus 4.6 v1 |
-| **Magos Reductor** (momus) | Siege-Master of Review | GPT-5.4 |
-| **Artisan** (hephaestus) | Forge-Master | GPT-5.4 |
-| **Transmechanic** (atlas) | Bearer of Cross-System Burdens | Claude Sonnet 4.5 |
 | **Lexmechanic** (librarian) | Keeper of the Holy Archives | Claude Sonnet 4.5 |
 | **Skitarii** (explore) | Cybernetic Vanguard | GPT-5 Mini |
-| **Omnispex Adept** (multimodal-looker) | Multi-Spectral Seer | Gemini 3 Flash Preview |
-| **Enginseer** (compaction) | Field Maintainer | Claude Opus 4.6 v1 |
-| **Servitor** (sisyphus-junior) | Lobotomized Task-Unit | Claude Sonnet 4.5 |
+| **Magos Fabricator** (fixer) | Forge-Master | GPT-5.4 |
+| **Artisan Aesthetica** (designer) | Shaper of Sacred Form | Gemini 3.1 Pro |
+| **Omnispex Adept** (observer) | Multi-Spectral Seer | Gemini 3 Flash Preview |
+| **Synod Primus** (council) | Convener of the Sacred Conclave | Claude Opus 4.6 v1 |
+| **Synodite** (councillor) | Voice of the Conclave | Claude Sonnet 4.5 |
 
 ## Repository Structure
 
@@ -38,9 +34,7 @@ A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-op
 ├── AGENTS.md                  # The Rite of the Omnissiah — global agent persona
 ├── agent-designations.md      # Quick-reference designation table
 ├── opencode.json              # OpenCode core configuration
-├── oh-my-opencode.json        # oh-my-opencode plugin configuration
-├── rites/
-│   └── sacred-designation.sh  # Patches Mechanicus names into the plugin UI
+├── oh-my-opencode-slim.json   # oh-my-opencode-slim plugin configuration
 └── README.md
 ```
 
@@ -49,7 +43,7 @@ A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-op
 ### Prerequisites
 
 - [OpenCode](https://opencode.ai) installed
-- [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin
+- [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) plugin
 - Access to **Amazon Bedrock** and/or **GitHub Copilot** providers
 
 ### Installation
@@ -63,20 +57,10 @@ A shareable OpenCode + [oh-my-opencode](https://github.com/code-yeongyu/oh-my-op
 2. Install the plugin dependency:
 
    ```bash
-   cd ~/.config/opencode && bun install
+   cd ~/.config/opencode && npm install
    ```
 
-3. Run the Rite of Sacred Designation to patch agent display names:
-
-   ```bash
-   ./rites/sacred-designation.sh
-   ```
-
-   The rite is idempotent — safe to invoke on every launch. Flags:
-   - `-q` — Quiet mode (for shell wrappers)
-   - `-f` — Force re-application
-
-4. Launch OpenCode. The machine spirit awakens.
+3. Launch OpenCode. The machine spirit awakens.
 
 ## Configuration
 
@@ -89,7 +73,7 @@ Configured in `opencode.json` under `enabled_providers`:
 
 ### Task Categories
 
-Configured in `oh-my-opencode.json` under `categories`. Each category routes to a model optimized for its domain:
+Configured in `oh-my-opencode-slim.json` under `categories`. Each category routes to a model optimized for its domain:
 
 | Category | Model | Use Case |
 |---|---|---|
@@ -105,22 +89,20 @@ Configured in `oh-my-opencode.json` under `categories`. Each category routes to 
 
 Remote operations (`git push`, `gh pr create`, etc.) are restricted by default. See the `permission` block in `opencode.json` for the full policy.
 
-## The Sacred Designation Rite
+## Historical Notes
 
-The `rites/sacred-designation.sh` script replaces mundane agent display names in the oh-my-opencode plugin with their Mechanicus designations. It operates on the cached plugin distribution files and:
+### Sacred Designation Rite (Retired)
 
-- Detects whether consecration has already been performed (idempotent)
-- Scopes replacements to the `AGENT_DISPLAY_NAMES` block only
-- Verifies the inscription succeeded before reporting completion
+The `rites/sacred-designation.sh` script was used in earlier versions to patch agent display names in the oh-my-opencode plugin. This rite is **no longer required** with oh-my-opencode-slim, which natively supports Mechanicus designations via the `displayName` configuration field in `oh-my-opencode-slim.json`.
 
-Run it after every plugin update to ensure the designations remain intact.
+For historical reference, the rite operated on cached plugin distribution files and verified inscription success before reporting completion. It is retained in the repository for archival purposes only.
 
 ## Customization
 
 - **Persona**: Edit `AGENTS.md` to adjust the Mechanicus voice, mannerisms, and behavioral rules.
-- **Models**: Edit `oh-my-opencode.json` to swap agent or category models.
+- **Models**: Edit `oh-my-opencode-slim.json` to swap agent or category models.
 - **Permissions**: Edit `opencode.json` to adjust git/GitHub CLI restrictions.
-- **Designations**: Edit `agent-designations.md` and update the corresponding entries in `AGENTS.md` and `rites/sacred-designation.sh`.
+- **Designations**: Edit `agent-designations.md` and update the corresponding entries in `AGENTS.md` and `oh-my-opencode-slim.json`.
 
 ---
 

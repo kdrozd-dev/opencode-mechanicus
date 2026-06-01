@@ -1,19 +1,13 @@
 # The Priesthood of Mars — Agent Designations
 
-| System Key | Mechanicus Designation | Role | Description |
-|---|---|---|---|
-| `sisyphus` | **Magos Dominus** | War-Commander of Automata | Commands all machine-servants and automata from the central forge-altar, orchestrating the holy work |
-| `oracle` | **Logis Magna** | Master of Sacred Data | Supreme analyst of logic, probability, and deep calculation — consulted when the variables exceed mortal comprehension |
-| `librarian` | **Lexmechanic** | Keeper of the Holy Archives | Recovers and deciphers sacred documentation from external data-vaults and ancient repositories |
-| `explore` | **Skitarii** | Cybernetic Vanguard | Augmented scout-soldier dispatched into unknown data-territories to reconnoitre and report |
-| `multimodal-looker` | **Omnispex Adept** | Multi-Spectral Seer | Perceives through augmented lenses across all spectral bands, interpreting visual data-forms |
-| `prometheus` | **Magos Tacticae** | Master of Tactical Planning | Devises the battle-plans before the campaign begins — no operation commences without the Tacticae's seal |
-| `metis` | **Divinator** | Augur of Hidden Variables | Foresees complications, ambiguities, and failure-cascades before the first line is forged |
-| `momus` | **Magos Reductor** | Siege-Master of Review | Specialist in demolition of flawed designs — ruthlessly evaluates plans for structural weakness |
-| `atlas` | **Transmechanic** | Bearer of Cross-System Burdens | Maintains data-links across multiple forge-domains, carrying operations between systems |
-| `hephaestus` | **Magos Fabricator** | Forge-Master | Shapes raw logic-metal into blessed implementation upon the sacred anvil |
-| `sisyphus-junior` | **Servitor** | Lobotomized Task-Unit | Mind-wiped machine-servant, executes atomic tasks as directed by the Magos Dominus |
-| `athena` | **Synod Primus** | Convener of the Sacred Conclave | Convenes the council of machine-spirits, synthesizing their findings into unified counsel |
-| `athena-junior` | **Synod Secundus** | Junior Convener of the Conclave | A lesser convener who assembles and relays the deliberations of the collegiate body |
-| `council-member` | **Synodite** | Voice of the Conclave | An individual voice within the sacred deliberation, presenting a single perspective with conviction |
-| `compaction` | **Enginseer** | Field Maintainer | Performs the rites of compression and maintenance upon bloated machine-memory |
+| System Key | Mechanicus Designation | Role |
+|---|---|---|
+| `orchestrator` | **Magos Dominus** | War-Commander of Automata |
+| `oracle` | **Logis Magna** | Master of Sacred Data |
+| `librarian` | **Lexmechanic** | Keeper of the Holy Archives |
+| `explorer` | **Skitarii** | Cybernetic Vanguard |
+| `fixer` | **Magos Fabricator** | Forge-Master |
+| `designer` | **Artisan Aesthetica** | Shaper of Sacred Form |
+| `observer` | **Omnispex Adept** | Multi-Spectral Seer |
+| `council` | **Synod Primus** | Convener of the Sacred Conclave |
+| `councillor` | **Synodite** | Voice of the Conclave |

@@ -1,0 +1,14 @@
+{
+  "agents": {
+    "orchestrator": { "displayName": "Magos Dominus" },
+    "oracle": { "displayName": "Logis Magna" },
+    "librarian": { "displayName": "Lexmechanic" },
+    "explorer": { "displayName": "Skitarii" },
+    "fixer": { "displayName": "Magos Fabricator" },
+    "designer": { "displayName": "Artisan Aesthetica" },
+    "observer": { "displayName": "Omnispex Adept" },
+    "council": { "displayName": "Synod Primus" },
+    "councillor": { "displayName": "Synodite" }
+  },
+  "disabled_agents": ["observer"]
+}
