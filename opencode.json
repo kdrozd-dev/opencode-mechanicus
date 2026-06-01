@@ -124,7 +124,6 @@
     }
   },
   "agent": {
-    "plan": { "disable": true },
     "compaction": { "model": "github-copilot/gpt-5.5" }
   }
 }
