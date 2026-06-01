@@ -7,7 +7,7 @@
     "github-copilot"
   ],
   "plugin": [
-    "./node_modules/oh-my-openagent",
+    "./node_modules/oh-my-opencode-slim",
     "./node_modules/@tarquinen/opencode-dcp",
     "./forge-memory-plugin"
   ],
