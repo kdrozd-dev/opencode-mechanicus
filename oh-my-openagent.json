@@ -14,7 +14,8 @@
       "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
     },
     "explore": {
-      "model": "github-copilot/gpt-5.4-mini"
+      "model": "github-copilot/gpt-5.4-mini",
+      "textVerbosity": "low"
     },
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash-preview"
@@ -46,7 +47,12 @@
     "replace_plan": false
   },
   "experimental": {
-    "preemptive_compaction": true
+    "preemptive_compaction": true,
+    "disable_omo_env": true
+  },
+  "background_task": {
+    "messageStalenessTimeoutMs": 120000,
+    "staleTimeoutMs": 180000
   },
   "categories": {
     "visual-engineering": {
@@ -62,7 +68,9 @@
       "variant": "high"
     },
     "quick": {
-      "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0"
+      "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "textVerbosity": "low",
+      "max_prompt_tokens": 8000
     },
     "unspecified-low": {
       "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
@@ -75,7 +83,8 @@
       "variant": "xhigh"
     },
     "writing": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "github-copilot/gemini-3-flash-preview",
+      "max_prompt_tokens": 16000
     }
   }
 }
