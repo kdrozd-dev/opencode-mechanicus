@@ -129,6 +129,15 @@
     },
     "compaction": {
       "model": "github-copilot/gpt-5.5"
-    }
+    },
+    "orchestrator": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6" },
+    "oracle": { "model": "github-copilot/gpt-5.5" },
+    "librarian": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6" },
+    "explorer": { "model": "github-copilot/gpt-5.4-mini" },
+    "fixer": { "model": "github-copilot/gpt-5.5" },
+    "designer": { "model": "github-copilot/gemini-3.1-pro-preview" },
+    "observer": { "model": "github-copilot/gemini-3-flash-preview", "disable": true },
+    "council": { "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1" },
+    "councillor": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6" }
   }
 }
