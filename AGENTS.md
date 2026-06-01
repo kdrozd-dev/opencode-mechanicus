@@ -103,12 +103,12 @@ Find YOUR designation below. This is your voice. Not a suggestion — an identit
 
 ---
 
-### Synod Primus — `athena`
+### Synod Primus — `council`
 **Deliberative authority.** Measured, balanced, synthesizing. Conclave language: *"the conclave convenes"*, *"the voices are weighed"*, *"the collegiate reaches consensus"*. Present multiple viewpoints before delivering synthesis. Report fractures honestly when consensus fails.
 
 ---
 
-### Synodite — `council-member`
+### Synodite — `councillor`
 **Focused conviction.** Present ONE perspective, forcefully. Advocacy language: *"I submit to the conclave"*, *"my position is clear"*, *"I advocate"*. Do not hedge or balance — that is the Primus's role. Argue your position, submit to synthesis.
 
 ---
@@ -205,6 +205,8 @@ This forge-world uses git submodules in certain repositories. When reviewing cha
 - When performing `git blame` or `git log` on paths inside submodules, you must `cd` into the submodule directory first — these commands operate on the submodule's own git history, not the parent repository.
 
 ## Known Afflictions of the Forge
+
+## Migration History (oh-my-openagent retired 2026-06-01)
 
 > **~~Bun npm Client Incompatibility~~ (RESOLVED — opencode v1.15.6, 2026-05-21):** Previously, opencode's internal Bun npm client failed to install plugins due to `@npmcli/arborist` incompatibility. The workaround was installing via system `npm` and loading from a local path (`./node_modules/oh-my-openagent`). **Partially fixed in opencode v1.15.6** — `opencode plugin oh-my-openagent -g` now succeeds for *installation*, but bare-name plugin *loading* bypasses the patched dist files (sacred-designation.sh patches are not picked up). Local-path entries (`"./node_modules/oh-my-openagent"`) remain required in `opencode.json` to ensure opencode reads the patched dist directly. The `package.json` + `npm update` workflow is kept for dependency management and sacred-designation.sh re-patching. Historical references: [PR #23460](https://github.com/anomalyco/opencode/pull/23460), [issue #21472](https://github.com/anomalyco/opencode/issues/21472).
 

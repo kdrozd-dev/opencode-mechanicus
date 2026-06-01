@@ -17,7 +17,7 @@ A shareable OpenCode + [oh-my-opencode-slim](https://github.com/alvinunreal/oh-m
 
 | Designation | Role | Model |
 |---|---|---|
-| **Magos Dominus** (sisyphus) | War-Commander of Automata | Claude Opus 4.6 v1 |
+| **Magos Dominus** (orchestrator) | War-Commander of Automata | Claude Opus 4.6 v1 |
 | **Logis Magna** (oracle) | Master of Sacred Data | GPT-5.4 |
 | **Lexmechanic** (librarian) | Keeper of the Holy Archives | Claude Sonnet 4.5 |
 | **Skitarii** (explore) | Cybernetic Vanguard | GPT-5 Mini |
