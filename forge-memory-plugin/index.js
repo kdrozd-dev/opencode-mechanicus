@@ -25,6 +25,22 @@ function runCmd(cmd) {
   });
 }
 
+function runForgeScript(args, cwd) {
+  return new Promise((resolve) => {
+    const child = spawn("bash", [FORGE_SCRIPT, ...args], {
+      env: process.env,
+      cwd: cwd || undefined,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    let out = "";
+    child.stdout.on("data", (d) => {
+      out += d.toString();
+    });
+    child.on("error", () => resolve(null));
+    child.on("close", () => resolve(out.trim() || null));
+  });
+}
+
 async function getMessages(client, sessionID) {
   const res = await client.session.messages({ path: { id: sessionID } });
   return res?.data ?? res ?? [];
@@ -46,12 +62,11 @@ async function countToolCalls(client, sessionID) {
 // ── Recent entries check ──────────────────────────────────────────────────────
 
 async function hasRecentEntries(cwd) {
-  const tasksDir = await runCmd(
-    `cd "${cwd}" 2>/dev/null && bash "${FORGE_SCRIPT}" path --tasks 2>/dev/null`,
-  );
+  const tasksDir = await runForgeScript(["path", "--tasks"], cwd);
   if (!tasksDir) return false;
+  const today = new Date().toISOString().slice(0, 10);
   const count = await runCmd(
-    `find "${tasksDir}" -name "*.md" -mmin -90 -type f 2>/dev/null | wc -l`,
+    `find "${tasksDir}" -name "${today}*.md" -mmin -15 -type f 2>/dev/null | wc -l`,
   );
   return parseInt(count ?? "0", 10) > 0;
 }
@@ -111,7 +126,7 @@ function extractSessionData(messages) {
 //   > retracted: X approach fails due to Y
 //   > confidence: high
 
-const SESSION_SUMMARY_RE = /^> forge:session-summary\n((?:^> .+(?:\n|$))*)/m;
+const SESSION_SUMMARY_RE = /^> forge:session-summary\s*\n((?:^> .+(?:\n|$))*)/m;
 const SUMMARY_LINE_RE = /^(\w+(?:_\w+)*):\s*(.+)$/;
 const SUMMARY_KEY_MAP = {
   decision: "decisions",
@@ -136,6 +151,7 @@ function parseSessionSummary(body) {
   for (const line of body.split("\n")) {
     const stripped = line.replace(/^>\s*/, "").trim();
     const m = stripped.match(SUMMARY_LINE_RE);
+    if (!m) continue;
     const [, key, value] = m;
     const clean = value.replace(/"/g, "'").trim();
     if (key === "retracted" || key === "retractions") {
@@ -428,7 +444,6 @@ const server = async ({ client, directory }) => {
       if (event?.type !== "session.idle") return;
       const sessionID = event.properties?.sessionID;
       if (!sessionID || seen.has(sessionID)) return;
-      seen.add(sessionID);
 
       let toolCalls = 0;
       try {
@@ -443,6 +458,8 @@ const server = async ({ client, directory }) => {
       } catch {
         return;
       }
+
+      seen.add(sessionID);
 
       try {
         const messages = await getMessages(client, sessionID);
@@ -487,9 +504,7 @@ const server = async ({ client, directory }) => {
           .replace(/-+$/, "");
         const slug = `${date}-${slugTail || "session"}`;
 
-        const stubPath = await runCmd(
-          `cd "${directory}" 2>/dev/null && bash "${FORGE_SCRIPT}" new "${slug}" 2>/dev/null`,
-        );
+        const stubPath = await runForgeScript(["new", slug], directory);
         if (!stubPath) return;
 
         fillStub(

@@ -7,8 +7,7 @@
 
   // ─── Autonomous Mode ──────────────────────────────────────────────────────
   // Model receives soft compression nudges at threshold boundaries.
-  // Combined with 60% trigger threshold (BKM: "compact at 60% not 90%"),
-  // this achieves token efficiency without manual intervention.
+  // With allowSubAgents enriching every request, manualMode stays off.
   "manualMode": {
     "enabled": false,
     "automaticStrategies": true
@@ -27,38 +26,68 @@
     "showCompression": false,
     "summaryBuffer": true,
 
-    // ─── Thresholds (BKM: trigger at 60%, floor at 40%) ─────────────────
-    // Above max: strong nudges fire every nudgeFrequency fetches.
-    // Between min and max: soft iteration-based reminders only.
-    // Below min: no nudging — free to work uninterrupted.
-    "maxContextLimit": "60%",
-    "minContextLimit": "40%",
+    // Explicit: user messages may be compressed away (forge-memory captures
+    // important decisions externally, so verbatim preservation is unnecessary).
+    "protectUserMessages": false,
 
-    // Per-model overrides — smaller context windows trigger earlier.
+    // Protected tools — these entries are never compressed away.
+    // write + edit added to preserve the record of file operations in context.
+    "protectedTools": ["task", "skill", "todowrite", "todoread", "write", "edit"],
+
+    // ─── Thresholds — ABSOLUTE TOKENS (not percentages) ──────────────────
+    // RATIONALE: Amazon Bedrock reports 1M context for Claude models.
+    // Percentage-based limits (e.g. 60%) would resolve to 600k/400k tokens,
+    // making DCP effectively dormant throughout all normal agentic sessions.
+    // Absolute values anchor to practical working-memory boundaries instead —
+    // the point where reasoning quality actually starts degrading, not where
+    // the window technically overflows.
+    //
+    // Above max: context-limit nudges fire every nudgeFrequency fetches.
+    // Between min and max: iteration-based soft nudges only.
+    // Below min: no nudging — free to work uninterrupted.
+    "maxContextLimit": 150000,
+    "minContextLimit": 80000,
+
+    // Per-model overrides
+    // Key format: "${providerId}/${modelId}" — must match exactly what the
+    // provider reports in input.model.limit.context (case-sensitive).
+    // Mismatches silently fall through to the global limits above.
     "modelMaxLimits": {
-      "github-copilot/gpt-5.4-mini":                                                "50%",
-      "github-copilot/gemini-3-flash-preview":                                      "50%",
-      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             "55%",
-      "amazon-bedrock/global.anthropic.claude-sonnet-4-6":                          "60%",
-      "github-copilot/gpt-5.5":                                                     "60%",
-      "github-copilot/gemini-3.1-pro-preview":                                      "60%",
-      "amazon-bedrock/us.anthropic.claude-opus-4-7":                                "65%"
+      // GitHub Copilot models
+      "github-copilot/gpt-5.4-mini":                                                60000,
+      "github-copilot/gpt-5.5":                                                     90000,
+      "github-copilot/grok-code-fast-1":                                            70000,
+      "github-copilot/gemini-3.1-pro-preview":                                      200000,
+      // Amazon Bedrock — Claude (all report 1M context)
+      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             120000,
+      "amazon-bedrock/global.anthropic.claude-sonnet-4-6":                          150000,
+      "amazon-bedrock/global.anthropic.claude-opus-4-6-v1":                         180000,
+      // Amazon Bedrock — DeepSeek (council councillor, ~128k context)
+      "amazon-bedrock/deepseek.r1-v1:0":                                            70000
     },
     "modelMinLimits": {
-      "github-copilot/gpt-5.4-mini":                                                "30%",
-      "github-copilot/gemini-3-flash-preview":                                      "30%",
-      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             "35%"
+      // GitHub Copilot models
+      "github-copilot/gpt-5.4-mini":                                                35000,
+      "github-copilot/gpt-5.5":                                                     50000,
+      "github-copilot/grok-code-fast-1":                                            40000,
+      "github-copilot/gemini-3.1-pro-preview":                                      120000,
+      // Amazon Bedrock — Claude
+      "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0":             60000,
+      "amazon-bedrock/global.anthropic.claude-sonnet-4-6":                          80000,
+      "amazon-bedrock/global.anthropic.claude-opus-4-6-v1":                         100000,
+      // Amazon Bedrock — DeepSeek
+      "amazon-bedrock/deepseek.r1-v1:0":                                            40000
     },
 
     // ─── Nudge Behavior ─────────────────────────────────────────────────────
     // nudgeFrequency: Fire context-limit nudge every Nth LLM fetch (default 5).
-    //   Lower = more aggressive, higher = less distraction.
-    // iterationNudgeThreshold: Start iteration nudges after N messages since
-    //   last user message. Prevents premature compression during long chains.
-    // nudgeForce: "soft" = gentle suggestion, "strong" = firm compression push.
-    //   With 60% threshold already low, "soft" suffices.
+    // iterationNudgeThreshold: 13 — one above prior value of 12 to avoid
+    //   premature firing during normal 6-subtask orchestration runs (which
+    //   generate ~12 messages before the next user turn).
+    // nudgeForce: "soft" — gentle suggestion is sufficient given proactive
+    //   absolute thresholds already trigger well before quality degrades.
     "nudgeFrequency": 5,
-    "iterationNudgeThreshold": 12,
+    "iterationNudgeThreshold": 13,
     "nudgeForce": "soft"
   },
 

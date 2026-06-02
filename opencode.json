@@ -53,11 +53,41 @@
       "git push": "deny",
       "git push *": "deny",
       "git remote": "ask",
-      "git remote *": "deny",
       "git remote -v": "ask",
       "git remote show *": "ask",
       "git remote get-url *": "ask",
+      "git remote add *": "deny",
+      "git remote set-url *": "deny",
+      "git remote remove *": "deny",
+      "git remote rename *": "deny",
+      "git remote *": "deny",
       "git lfs push *": "deny",
+      "git commit": "ask",
+      "git commit *": "ask",
+      "git add": "ask",
+      "git add *": "ask",
+      "git rebase": "ask",
+      "git rebase *": "ask",
+      "git merge": "ask",
+      "git merge *": "ask",
+      "git reset": "ask",
+      "git reset *": "ask",
+      "git stash": "allow",
+      "git stash *": "allow",
+      "git cherry-pick": "ask",
+      "git cherry-pick *": "ask",
+      "git revert": "ask",
+      "git revert *": "ask",
+      "git clean": "ask",
+      "git clean *": "ask",
+      "git rm *": "ask",
+      "git mv *": "ask",
+      "git restore": "ask",
+      "git restore *": "ask",
+      "git tag *": "ask",
+      "git branch -d *": "ask",
+      "git branch -D *": "ask",
+      "git branch *": "allow",
       "git fetch": "ask",
       "git fetch *": "ask",
       "git pull": "ask",
@@ -119,7 +149,7 @@
     },
     "python-checker": {
       "type": "local",
-      "command": ["/home/kdrozd/.config/opencode/.venv/bin/mcp-tools-py", "--project-dir", ".", "--venv-path", "/home/kdrozd/native_pytorch_dev/pytorch_native_venv"],
+      "command": ["/home/kdrozd/.config/opencode/.venv/bin/mcp-tools-py", "--project-dir", ".", "--venv-path", "/home/kdrozd/native_pytorch_dev/pytorch_native_venv", "--console-only"],
       "enabled": true
     },
     "gtax": {
@@ -129,6 +159,7 @@
     }
   },
   "agent": {
-    "compaction": { "model": "github-copilot/gpt-5.5" }
+    "compaction": { "model": "github-copilot/gpt-5.5" },
+    "explore": { "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0" }
   }
 }

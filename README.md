@@ -32,7 +32,6 @@ A shareable OpenCode + [oh-my-opencode-slim](https://github.com/alvinunreal/oh-m
 ```
 .
 ├── AGENTS.md                  # The Rite of the Omnissiah — global agent persona
-├── agent-designations.md      # Quick-reference designation table
 ├── opencode.json              # OpenCode core configuration
 ├── oh-my-opencode-slim.json   # oh-my-opencode-slim plugin configuration
 └── README.md
@@ -95,14 +94,14 @@ Remote operations (`git push`, `gh pr create`, etc.) are restricted by default. 
 
 The `rites/sacred-designation.sh` script was used in earlier versions to patch agent display names in the oh-my-opencode plugin. This rite is **no longer required** with oh-my-opencode-slim, which natively supports Mechanicus designations via the `displayName` configuration field in `oh-my-opencode-slim.json`.
 
-For historical reference, the rite operated on cached plugin distribution files and verified inscription success before reporting completion. It is retained in the repository for archival purposes only.
+For historical reference, the rite operated on cached plugin distribution files. It is **deleted** — the repository no longer contains it.
 
 ## Customization
 
 - **Persona**: Edit `AGENTS.md` to adjust the Mechanicus voice, mannerisms, and behavioral rules.
 - **Models**: Edit `oh-my-opencode-slim.json` to swap agent or category models.
 - **Permissions**: Edit `opencode.json` to adjust git/GitHub CLI restrictions.
-- **Designations**: Edit `agent-designations.md` and update the corresponding entries in `AGENTS.md` and `oh-my-opencode-slim.json`.
+- **Designations**: Edit `oh-my-opencode-slim.json` under `agents.<key>.displayName` and update the table in `AGENTS.md`.
 
 ---
 

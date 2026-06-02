@@ -12,7 +12,7 @@ This forge-world migrated from `oh-my-openagent@4.5.12` to `oh-my-opencode-slim@
 
 **Commit attribution suppression** is enforced via `.git/hooks/commit-msg` (a git-level safety net). The AGENTS.md prompt rule remains as belt-and-suspenders.
 
-**Legacy mainline doctrine** archived in `.omo.archive/` for historical reference.
+**Legacy mainline doctrine** is preserved in git history for archival reference.
 
 **Revert path**: `git checkout main -- opencode.json` (atomic plugin pointer revert) or `git checkout main` (full branch revert).
 
@@ -22,7 +22,7 @@ This forge-world migrated from `oh-my-openagent@4.5.12` to `oh-my-opencode-slim@
 - **Commit attribution**: `.git/hooks/commit-msg` strips AI attribution lines at git-level
 - **AGENTS.md injection**: Handled by opencode core (unchanged from mainline)
 - **Agent roster**: 9 agents — orchestrator, oracle, librarian, explorer, fixer, designer, observer (disabled), council, councillor
-- **Legacy archive**: `.omo.archive/` contains prior plans and the retired `sacred-designation.sh` doctrine
+- **Legacy archive**: Retired `sacred-designation.sh` doctrine preserved in git history only
 
 ## FILES
 

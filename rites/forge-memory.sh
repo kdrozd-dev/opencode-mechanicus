@@ -12,7 +12,7 @@ set -euo pipefail
 #    forge-memory.sh new <slug>
 #    forge-memory.sh prune [--dry-run] [--days N]
 #    forge-memory.sh report <timespan>
-#    forge-memory.sh compile-prep [--scope local|global] [--since SPEC]
+#    forge-memory.sh compile-prep [--since SPEC]
 #    forge-memory.sh autostart
 #    forge-memory.sh -h|--help
 #
@@ -117,7 +117,13 @@ cmd_path() {
     --key)              printf '%s\n' "$key" ;;
     --tasks)            printf '%s\n' "${FORGE_ROOT}/${key}/tasks" ;;
     --knowledge)        printf '%s\n' "${wiki_dir}" ;;
-    --global-knowledge) printf '%s\n' "${HOME}/.config/opencode/.forge/knowledge" ;;
+    --global-knowledge)
+                        local global_wiki="${FORGE_ROOT}/_global/wiki"
+                        mkdir -p "${global_wiki}/topics"
+                        [[ -f "${global_wiki}/_index.md" ]] || \
+                          printf '# Global Wiki — Index\n\n<!-- last-compiled: never -->\n' \
+                            > "${global_wiki}/_index.md"
+                        printf '%s\n' "${global_wiki}" ;;
     "")                 printf '%s\n' "${FORGE_ROOT}/${key}" ;;
     *) printf 'path: unknown option: %s\n' "$mode" >&2; exit 1 ;;
   esac
@@ -159,11 +165,12 @@ EOF
 }
 
 cmd_prune() {
-  local dry_run=false days=14
+  local dry_run=false days=14 not_newer_than=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --dry-run) dry_run=true ;;
       --days)    shift; days="$1" ;;
+      --not-newer-than) shift; not_newer_than="${1:-}" ;;
       *)         printf 'prune: unknown option: %s\n' "$1" >&2; exit 1 ;;
     esac
     shift
@@ -176,15 +183,27 @@ cmd_prune() {
     exit 0
   fi
   local count=0
-  while IFS= read -r f; do
-    count=$((count + 1))
-    if [[ "$dry_run" == true ]]; then
-      printf '[dry-run] would delete: %s\n' "$f"
-    else
-      rm -- "$f"
-      printf 'deleted: %s\n' "$f"
-    fi
-  done < <(find "$tasks_dir" -name "*.md" -type f -mtime +"$days" 2>/dev/null || true)
+  if [[ -n "$not_newer_than" ]]; then
+    while IFS= read -r f; do
+      count=$((count + 1))
+      if [[ "$dry_run" == true ]]; then
+        printf '[dry-run] would delete: %s\n' "$f"
+      else
+        rm -- "$f"
+        printf 'deleted: %s\n' "$f"
+      fi
+    done < <(find "$tasks_dir" -name "*.md" -type f -mtime +"$days" ! -newer "$not_newer_than" 2>/dev/null || true)
+  else
+    while IFS= read -r f; do
+      count=$((count + 1))
+      if [[ "$dry_run" == true ]]; then
+        printf '[dry-run] would delete: %s\n' "$f"
+      else
+        rm -- "$f"
+        printf 'deleted: %s\n' "$f"
+      fi
+    done < <(find "$tasks_dir" -name "*.md" -type f -mtime +"$days" 2>/dev/null || true)
+  fi
   if [[ $count -eq 0 ]]; then
     printf 'No entries older than %s days. Nothing to prune.\n' "$days"
   fi
@@ -236,10 +255,9 @@ cmd_report() {
 # ── compile-prep subcommand ────────────────────────────────────────────────────
 
 cmd_compile_prep() {
-  local scope="local" since_override=""
+  local since_override=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --scope) shift; scope="${1:-local}" ;;
       --since) shift; since_override="${1:-}" ;;
       *) printf 'compile-prep: unknown option: %s\n' "$1" >&2; exit 1 ;;
     esac
@@ -249,14 +267,9 @@ cmd_compile_prep() {
   key=$(get_key)
   local wiki_dir="${FORGE_ROOT}/${key}/wiki"
   local index_file project_key_display
-  if [[ "$scope" == "global" ]]; then
-    index_file="${HOME}/.config/opencode/.forge/knowledge/_index.md"
-    project_key_display="global"
-  else
-    cmd_path --knowledge > /dev/null 2>&1
-    index_file="${wiki_dir}/_index.md"
-    project_key_display="$key"
-  fi
+  cmd_path --knowledge > /dev/null 2>&1
+  index_file="${wiki_dir}/_index.md"
+  project_key_display="$key"
   local last_compiled
   last_compiled=$(read_last_compiled "$index_file")
   local since_ts
@@ -284,7 +297,7 @@ cmd_compile_prep() {
   fi
   printf '# Compile Manifest\n\n'
   printf 'Scope: %s\nProject-key: %s\nSince: %s\nLast-compiled: %s\nEntries-found: %d\n' \
-    "$scope" "$project_key_display" "$since_ts" "$last_compiled" "${#selected[@]}"
+    "local" "$project_key_display" "$since_ts" "$last_compiled" "${#selected[@]}"
   printf '\n## New Journal Entries\n'
   if [[ ${#selected[@]} -gt 0 ]]; then
     for f in "${selected[@]}"; do
@@ -332,11 +345,6 @@ cmd_autostart() {
   wiki_dir="${FORGE_ROOT}/${key}/wiki"
   index_file="${wiki_dir}/_index.md"
   cmd_path --knowledge > /dev/null 2>&1
-  local prune_output pruned=0
-  prune_output=$(cmd_prune --days 14 2>&1) || true
-  while IFS= read -r _line; do
-    case "$_line" in deleted:*) pruned=$((pruned + 1));; esac
-  done <<< "$prune_output"
   local last_compiled
   last_compiled=$(read_last_compiled "$index_file")
   local since_epoch=0
@@ -353,6 +361,13 @@ cmd_autostart() {
       fe=$(ts_to_epoch "$sv")
       [[ $fe -ge $since_epoch ]] && new_entries=$((new_entries + 1))
     done < <(find "$tasks_dir" -name "*.md" -type f 2>/dev/null || true)
+  fi
+  local prune_output pruned=0
+  if [[ "$last_compiled" != "never" ]]; then
+    prune_output=$(cmd_prune --days 14 --not-newer-than "$index_file" 2>&1) || true
+    while IFS= read -r _line; do
+      case "$_line" in deleted:*) pruned=$((pruned + 1));; esac
+    done <<< "$prune_output"
   fi
   local needs_compile="no"
   if [[ $new_entries -ge 5 ]] \
@@ -371,9 +386,9 @@ The Rite of Forge Memory — per-project task journal manager
 Usage:
   forge-memory.sh path [--tasks|--knowledge|--global-knowledge|--key]
   forge-memory.sh new <slug>
-  forge-memory.sh prune [--dry-run] [--days N]
+  forge-memory.sh prune [--dry-run] [--days N] [--not-newer-than FILE]
   forge-memory.sh report <timespan>
-  forge-memory.sh compile-prep [--scope local|global] [--since SPEC]
+  forge-memory.sh compile-prep [--since SPEC]
   forge-memory.sh autostart
   forge-memory.sh -h|--help
 
@@ -384,27 +399,28 @@ Subcommands:
         --key              project key only
         --tasks            tasks subdirectory path
         --knowledge        per-project wiki dir: {forge-root}/{key}/wiki/
-        --global-knowledge global knowledge: ~/.config/opencode/.forge/knowledge/
+        --global-knowledge global knowledge: {forge-root}/_global/wiki/
 
   new <slug>
       Create a journal stub in the tasks directory.
       Slug is sanitized (lowercase, non-alnum→dash, max 40 chars).
       Prints the absolute path of the created file.
 
-  prune [--dry-run] [--days N]
+  prune [--dry-run] [--days N] [--not-newer-than FILE]
       Delete journal entries older than N days (default: 14).
       --dry-run  list files without deleting; exit 0 if nothing found.
+      --not-newer-than FILE  only delete entries not newer than FILE.
 
   report <timespan>
       Print a markdown digest of recent tasks, grouped by date.
       Timespan formats: Nd | today (=0d) | week (=7d) | 2weeks (=14d)
 
-  compile-prep [--scope local|global] [--since SPEC]
+  compile-prep [--since SPEC]
       Emit a structured manifest of new journal entries since last compile.
-      Default scope: local (per-project wiki). --since overrides the marker.
+      Uses the local per-project wiki. --since overrides the marker.
 
   autostart
-      Run maintenance (prune 14d), count new entries, report compile status.
+      Count new entries, then prune already-compiled entries older than 14d.
       Prints: pruned: N / new-entries: N / needs-compile: yes|no
 
 Storage: ${XDG_DATA_HOME:-~/.local/share}/opencode-forge/{project-key}/
