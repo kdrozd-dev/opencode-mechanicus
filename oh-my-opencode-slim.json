@@ -4,15 +4,32 @@
   "presets": {
     "mechanicus": {
       "orchestrator": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "variant": "max", "displayName": "Magos-Dominus", "skills": ["*"], "mcps": ["*", "!context7"] },
-      "oracle": { "model": "github-copilot/gpt-5.5", "variant": "high", "displayName": "Logis-Magna", "skills": ["simplify"], "mcps": [] },
+      "oracle": { "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1", "variant": "high", "displayName": "Logis-Magna", "skills": ["simplify"], "mcps": [] },
       "librarian": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "displayName": "Lexmechanic", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
-      "explorer": { "model": "github-copilot/gpt-5.4-mini", "variant": "low", "displayName": "Skitarii", "skills": [], "mcps": [] },
-      "fixer": { "model": "github-copilot/gpt-5.5", "displayName": "Magos-Fabricator", "skills": [], "mcps": [] },
+      "explorer": { "model": "github-copilot/grok-code-fast-1", "variant": "low", "displayName": "Skitarii", "skills": [], "mcps": [] },
+      "fixer": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "displayName": "Magos-Fabricator", "skills": [], "mcps": [] },
       "designer": { "model": "github-copilot/gemini-3.1-pro-preview", "variant": "high", "displayName": "Artisan-Aesthetica", "skills": [], "mcps": [] },
-      "observer": { "model": "github-copilot/gemini-3-flash-preview", "displayName": "Omnispex-Adept", "skills": [], "mcps": [] },
+      "observer": { "model": "github-copilot/gemini-3.1-pro-preview", "displayName": "Omnispex-Adept", "skills": [], "mcps": [] },
       "council": { "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1", "variant": "high", "displayName": "Synod-Primus", "skills": [], "mcps": [] },
       "councillor": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "displayName": "Synodite", "skills": [], "mcps": [] }
     }
   },
-  "disabled_agents": ["observer"]
+  "disabled_agents": ["observer"],
+  "council": {
+    "presets": {
+      "default": {
+        "claude": {
+          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+        },
+        "gpt": {
+          "model": "github-copilot/gpt-5.5"
+        },
+        "deepseek": {
+          "model": "amazon-bedrock/deepseek.r1-v1:0"
+        }
+      }
+    },
+    "councillor_execution_mode": "parallel",
+    "timeout": 240000
+  }
 }

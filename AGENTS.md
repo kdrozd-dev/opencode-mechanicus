@@ -225,9 +225,9 @@ This forge-world uses git submodules in certain repositories. When reviewing cha
 Persistent memory follows Karpathy's compiler model: raw `tasks/*.md` (source) → AI compiler → topical wiki files (executable). All managed by `bash ~/.config/opencode/rites/forge-memory.sh`.
 
 ### Autonomous Triggers (run without being asked)
-- **On session start (first tool use)**: run `bash ~/.config/opencode/rites/forge-memory.sh autostart`. If output line `needs-compile: yes` appears, immediately invoke skill `forge-memory` and follow the Compile Pass workflow.
+- **On session start (first tool use)**: run `bash ~/.config/opencode/rites/forge-memory.sh autostart`. If output line `needs-compile: yes` appears, dispatch the Compile Pass as a **subtask** (do NOT run it inline — it must not pollute the main conversation context). Subtask prompt: *"Run the forge-memory Compile Pass for project github.com_kdrozd-dev_opencode-mechanicus. Load skill forge-memory, follow the Compile Pass workflow steps exactly, write all wiki topic files, update _index.md last-compiled marker. Return: 'Compiled N entries → updated M wiki files. K contradictions flagged.' Nothing else."*
 - **On session start**: immediately Read `~/.config/opencode/.forge/knowledge/_index.md` (global) AND the per-project `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/_index.md` if it exists. These are mandatory reads, not optional.
-- **After every 5 new journal entries** in current project: same — invoke skill `forge-memory` Compile Pass.
+- **After every 5 new journal entries** in current project: same — dispatch Compile Pass as a subtask (same prompt as above).
 
 ### Knowledge (proactive — load before acting)
 - **Before any implementation task**: Read `patterns.md` and `gotchas.md` for the current project wiki. Check for prior decisions in `decisions.md`.
@@ -237,9 +237,45 @@ Persistent memory follows Karpathy's compiler model: raw `tasks/*.md` (source) �
 - Topical files live at `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/topics/` (per-project) or `~/.config/opencode/.forge/knowledge/` (global).
 - Topical files are COMPILED OUTPUT — write only via Compile Pass workflow, not raw appends.
 
-### Task Journal (write on completion)
-- On non-trivial task completion: run `bash ~/.config/opencode/rites/forge-memory.sh new <slug>` — it prints stub path
-- Edit that stub to follow template in `_index.md` (≤25 lines, frontmatter + Goal/Outcome/Notes bullets)
-- Skip if task was trivial (<2 tool calls)
+### Knowledge Markers (emit when relevant)
+
+When you discover something future sessions should know, embed markers as blockquotes at the end of your response. The colored emoji signals the type; the forge-memory plugin extracts them from raw message content.
+
+> 🔵 forge:decision: Chose X over Y because Z
+> 🟡 forge:gotcha: BSD date lacks -d flag; use date -j -f instead
+> 🟢 forge:pattern: Always wrap client.session.prompt() in try/catch — throws on timeout
+> 🟣 forge:open_question: Why does session.abort() not clean up child session state?
+
+**If you were corrected during the session**, emit a retraction:
+> 🟠 forge:retract: the wrong claim from earlier, verbatim or close paraphrase
+
+**If corrections occurred**, emit a session-summary blockquote as your final substantive response. This supersedes ALL individual markers:
+> forge:session-summary
+> decision: final correct choice and why
+> gotcha: confirmed pitfall (post-correction)
+> pattern: confirmed reusable technique
+> retracted: the earlier wrong claim
+> confidence: high
+
+Rules:
+- 3–5 markers max per session; emit them at the END of your response, not mid-prose
+- The forge-memory plugin harvests them automatically — no manual action needed
+- When you emit a `forge:session-summary`, ALL individual markers are ignored — the summary is authoritative
+
+### Task Journal (write on completion — MANDATORY)
+
+**After completing any non-trivial task (≥3 tool calls), you MUST write a journal entry BEFORE responding to the Archmagos.**
+
+Steps — do not skip, do not defer:
+1. Run `bash ~/.config/opencode/rites/forge-memory.sh new <slug>` — prints the stub path
+2. Immediately `Read` the stub, then `Edit` it to fill in Goal / Outcome / Notes (≤25 lines total, follow template in `_index.md`)
+3. Slug format: `YYYYMMDD-short-task-desc` (e.g. `20260602-fix-memory-hook`)
+
+Enforcement rules:
+- The forge-memory-plugin auto-writes a background `status: auto-draft` entry on `session.idle` if none exists — this is the fallback, not the primary path
+- Write manually for richer entries; auto-drafts capture tool titles and first user message but lack deep context
+- Skip manual write ONLY if the entire task used fewer than 3 tool calls
+- One entry per logical task — batch multiple small fixes into one entry if done in sequence
 - Per-project storage is out-of-tree at `~/.local/share/opencode-forge/{project-key}/` — never inside foreign repos
+- After every 5 new entries: dispatch Compile Pass as a subtask (same prompt as in Autonomous Triggers above)
 - Reports/pruning: `bash ~/.config/opencode/rites/forge-memory.sh report 7d` or `prune --dry-run`
