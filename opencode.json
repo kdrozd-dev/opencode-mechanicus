@@ -7,7 +7,7 @@
     "github-copilot"
   ],
   "plugin": [
-    "./node_modules/oh-my-openagent",
+    "./node_modules/oh-my-opencode-slim",
     "./node_modules/@tarquinen/opencode-dcp",
     "./forge-memory-plugin"
   ],
@@ -33,6 +33,11 @@
     }
   },
   "permission": {
+    "external_directory": {
+      "~/.local/share/opencode-forge/**": "allow",
+      "~/.claude/**": "allow",
+      "/tmp/opencode/**": "allow"
+    },
     "gtax": {
       "gtax_reservations_create": "ask",
       "gtax_reservation_extend": "ask",
@@ -48,10 +53,10 @@
       "git push": "deny",
       "git push *": "deny",
       "git remote": "ask",
+      "git remote *": "deny",
       "git remote -v": "ask",
       "git remote show *": "ask",
       "git remote get-url *": "ask",
-      "git remote *": "deny",
       "git lfs push *": "deny",
       "git fetch": "ask",
       "git fetch *": "ask",
@@ -124,11 +129,6 @@
     }
   },
   "agent": {
-    "plan": {
-      "disable": true
-    },
-    "compaction": {
-      "model": "github-copilot/gpt-5.5"
-    }
+    "compaction": { "model": "github-copilot/gpt-5.5" }
   }
 }
