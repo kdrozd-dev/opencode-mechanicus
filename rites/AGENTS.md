@@ -26,15 +26,19 @@ This forge-world migrated from `oh-my-openagent@4.5.12` to `oh-my-opencode-slim@
 
 ## FILES
 
-| File | Purpose |
-|------|---------|
-| `sacred-designation.sh` | Patches display names + 4 hook functions + neutralizes AI attribution |
+> **These files are RETIRED as of the omo→slim migration (2026-06-01). The table below is historical reference only.**
 
-## ANTI-PATTERNS
+| File | Former Purpose |
+|------|---------|
+| `sacred-designation.sh` (DELETED) | Patched display names + 4 hook functions + neutralized AI attribution |
+
+## ANTI-PATTERNS (RETIRED — for historical reference only)
+
+> These rules applied to the deleted `sacred-designation.sh` rite. They are no longer operational.
 
 - **NEVER** use line numbers in sed addresses — dist files shift between plugin versions
 - **NEVER** modify `apply_designations` sed rules without testing against a fresh (unpatched) dist
 - **NEVER** patch functions that already use `getAgentConfigKey` — those resolve names correctly
 - **NEVER** expand scope beyond the 4 identified broken hook functions
-- **MUST** re-run with `-f` after `npm install` or `bun install` — patches are overwritten
+- ~~**MUST** re-run with `-f` after `npm install` or `bun install` — patches are overwritten~~
 - Repeated sed on already-patched files can corrupt — the idempotency guards prevent this, do not bypass them
