@@ -272,6 +272,21 @@ cmd_compile_prep() {
   project_key_display="$key"
   local last_compiled
   last_compiled=$(read_last_compiled "$index_file")
+  local now_ts now_epoch
+  now_ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  now_epoch=$(date -u +%s)
+  # Future-timestamp guard: warn if last-compiled is ahead of system clock
+  if [[ "$last_compiled" != "never" ]]; then
+    local lc_epoch
+    lc_epoch=$(ts_to_epoch "$last_compiled")
+    if [[ $lc_epoch -gt $now_epoch ]]; then
+      local drift=$(( lc_epoch - now_epoch ))
+      printf 'WARN: last-compiled (%s) is %ds ahead of system clock (%s) — AI clock drift detected.\n' \
+        "$last_compiled" "$drift" "$now_ts" >&2
+      printf 'WARN: New entries may be missed. Fix: forge-memory.sh set-compiled. Override: --since %s\n' \
+        "$now_ts" >&2
+    fi
+  fi
   local since_ts
   if [[ -n "$since_override" ]]; then
     since_ts="$since_override"
@@ -296,8 +311,8 @@ cmd_compile_prep() {
     done < <(find "$tasks_dir" -name "*.md" -type f 2>/dev/null | sort || true)
   fi
   printf '# Compile Manifest\n\n'
-  printf 'Scope: %s\nProject-key: %s\nSince: %s\nLast-compiled: %s\nEntries-found: %d\n' \
-    "local" "$project_key_display" "$since_ts" "$last_compiled" "${#selected[@]}"
+  printf 'Scope: %s\nProject-key: %s\nSince: %s\nLast-compiled: %s\nCurrent-time: %s\nEntries-found: %d\n' \
+    "local" "$project_key_display" "$since_ts" "$last_compiled" "$now_ts" "${#selected[@]}"
   printf '\n## New Journal Entries\n'
   if [[ ${#selected[@]} -gt 0 ]]; then
     for f in "${selected[@]}"; do
@@ -348,7 +363,16 @@ cmd_autostart() {
   local last_compiled
   last_compiled=$(read_last_compiled "$index_file")
   local since_epoch=0
-  [[ "$last_compiled" != "never" ]] && since_epoch=$(ts_to_epoch "$last_compiled")
+  if [[ "$last_compiled" != "never" ]]; then
+    since_epoch=$(ts_to_epoch "$last_compiled")
+    # Future-timestamp guard
+    local now_epoch
+    now_epoch=$(date -u +%s)
+    if [[ $since_epoch -gt $now_epoch ]]; then
+      printf 'WARN: last-compiled (%s) is %ds ahead of system clock — AI clock drift detected. Run: forge-memory.sh set-compiled\n' \
+        "$last_compiled" $(( since_epoch - now_epoch )) >&2
+    fi
+  fi
   local tasks_dir="${FORGE_ROOT}/${key}/tasks"
   local new_entries=0
   if [[ -d "$tasks_dir" ]]; then
@@ -379,6 +403,43 @@ cmd_autostart() {
   printf 'needs-compile: %s\n' "$needs_compile"
 }
 
+cmd_complete() {
+  if [[ $# -lt 1 ]]; then
+    printf 'complete: file path or slug required\n' >&2; exit 1
+  fi
+  local target="$1"
+  # Accept full path or slug — resolve slug against current project tasks dir
+  if [[ ! -f "$target" ]]; then
+    local key tasks_dir match
+    key=$(get_key)
+    tasks_dir="${FORGE_ROOT}/${key}/tasks"
+    match=$(find "$tasks_dir" -name "*${target}*" -type f 2>/dev/null | sort | tail -1 || true)
+    if [[ -z "$match" ]]; then
+      printf 'complete: no file found matching: %s\n' "$target" >&2; exit 1
+    fi
+    target="$match"
+  fi
+  local now
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  sed -i \
+    -e "s|^completed:.*|completed: ${now}|" \
+    -e "s|^status: in_progress|status: done|" \
+    "$target"
+  printf 'completed: %s\n' "$now"
+  printf 'file: %s\n' "$target"
+}
+
+cmd_set_compiled() {
+  local key wiki_dir index_file now
+  key=$(get_key)
+  wiki_dir="${FORGE_ROOT}/${key}/wiki"
+  index_file="${wiki_dir}/_index.md"
+  [[ -f "$index_file" ]] || { printf 'set-compiled: _index.md not found at %s\n' "$index_file" >&2; exit 1; }
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  sed -i "s|<!-- last-compiled:.*-->|<!-- last-compiled: ${now} -->|" "$index_file"
+  printf 'last-compiled set to: %s\n' "$now"
+}
+
 usage() {
   cat <<'USAGE'
 The Rite of Forge Memory — per-project task journal manager
@@ -386,9 +447,11 @@ The Rite of Forge Memory — per-project task journal manager
 Usage:
   forge-memory.sh path [--tasks|--knowledge|--global-knowledge|--key]
   forge-memory.sh new <slug>
+  forge-memory.sh complete <path-or-slug>
   forge-memory.sh prune [--dry-run] [--days N] [--not-newer-than FILE]
   forge-memory.sh report <timespan>
   forge-memory.sh compile-prep [--since SPEC]
+  forge-memory.sh set-compiled
   forge-memory.sh autostart
   forge-memory.sh -h|--help
 
@@ -405,6 +468,12 @@ Subcommands:
       Create a journal stub in the tasks directory.
       Slug is sanitized (lowercase, non-alnum→dash, max 40 chars).
       Prints the absolute path of the created file.
+      Sets started: to real system clock — do NOT overwrite this field.
+
+  complete <path-or-slug>
+      Write the real system clock into completed: and set status: done.
+      Always use this instead of hand-writing completed: to prevent AI clock drift.
+      Accepts full path or partial slug (matches latest file containing the slug).
 
   prune [--dry-run] [--days N] [--not-newer-than FILE]
       Delete journal entries older than N days (default: 14).
@@ -418,6 +487,12 @@ Subcommands:
   compile-prep [--since SPEC]
       Emit a structured manifest of new journal entries since last compile.
       Uses the local per-project wiki. --since overrides the marker.
+      Output includes Current-time (system clock) to detect AI clock drift.
+      Warns to stderr if last-compiled marker is ahead of system clock.
+
+  set-compiled
+      Write the real system clock to the last-compiled marker in _index.md.
+      Always use this (never Edit the marker manually) to prevent AI clock drift.
 
   autostart
       Count new entries, then prune already-compiled entries older than 14d.
@@ -434,9 +509,11 @@ USAGE
 case "${1:-}" in
   path)         cmd_path "${@:2}" ;;
   new)          cmd_new "${@:2}" ;;
+  complete)     cmd_complete "${@:2}" ;;
   prune)        cmd_prune "${@:2}" ;;
   report)       cmd_report "${@:2}" ;;
   compile-prep) cmd_compile_prep "${@:2}" ;;
+  set-compiled) cmd_set_compiled ;;
   autostart)    cmd_autostart ;;
   -h|--help|"") usage; exit 0 ;;
   *)            printf 'Unknown subcommand: %s\n' "$1" >&2
