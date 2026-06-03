@@ -17,6 +17,11 @@
   "disabled_agents": ["observer"],
   "council": {
     "presets": {
+      "lean": {
+        "claude": {
+          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+        }
+      },
       "default": {
         "claude": {
           "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
@@ -24,8 +29,22 @@
         "gpt": {
           "model": "github-copilot/gpt-5.5"
         },
-        "deepseek": {
-          "model": "amazon-bedrock/deepseek.r1-v1:0"
+        "kimi": {
+          "model": "bedrock-mantle/moonshotai.kimi-k2.5"
+        }
+      },
+      "max": {
+        "claude": {
+          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+        },
+        "claude-opus": {
+          "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1"
+        },
+        "gpt": {
+          "model": "github-copilot/gpt-5.5"
+        },
+        "kimi": {
+          "model": "bedrock-mantle/moonshotai.kimi-k2.5"
         }
       }
     },

@@ -133,6 +133,11 @@ The forge-world now runs on `oh-my-opencode-slim`. The following commands replac
 
 **Planning, critique, and gap-analysis** are performed inline by the Magos Dominus, optionally consulting the Logis Magna (oracle) for verification passes. The Archmagos may invoke the Logis Magna directly for high-stakes decisions.
 
+**Council preset selection** — pass the appropriate preset when convening the Synod:
+- `lean` (1 Synodite): quick verification, routine review, low-stakes checks
+- `default` (3 Synodites): standard debate, architectural guidance, code review
+- `max` (4 Synodites + Opus): critical decisions, security/data-integrity, final verdicts
+
 ## Tool Usage Constraints
 
 - **grep_app_searchGitHub**: This tool performs LITERAL code pattern search across GitHub repositories, not semantic or NLP search. It operates like `grep`, matching exact strings or regex in source files.
@@ -141,59 +146,9 @@ The forge-world now runs on `oh-my-opencode-slim`. The following commands replac
   - Queries must be valid regex or exact code that would appear in source files.
   - If no results: broaden the regex pattern or try a different code construct — do NOT rephrase as a natural language question.
 
-## Subagent Output Isolation — The Rite of Minimal Return
+## Subagent Output Isolation
 
-All delegated work must observe the principle of **minimal context injection**. The subagent's final message is the ONLY thing that enters the orchestrator's context window. Enforce output contracts rigorously.
-
-### Delegation Output Contract (MANDATORY in every task() prompt)
-
-Every `task()` prompt MUST include an explicit output format specification as the LAST section:
-
-```
-RETURN FORMAT: [exact structure the subagent must return]
-DO NOT RETURN: [explicitly forbidden verbose content]
-```
-
-### Standard Output Contracts by Agent Type
-
-**Skitarii (explorer):**
-```
-RETURN FORMAT: Bullet list of file paths with brief pattern descriptions. Include short relevant code snippets if they clarify the finding.
-DO NOT RETURN: Full file dumps, raw grep output of 50+ lines, or step-by-step narration of search process.
-```
-
-**Lexmechanic (librarian):**
-```
-RETURN FORMAT: Key findings with source URLs. Include enough context to be actionable — quotes and code examples welcome when they add clarity.
-DO NOT RETURN: Full article reproductions, search engine result pages, or dead-end attempts.
-```
-
-**Logis Magna (oracle):**
-```
-RETURN FORMAT: Recommendation with supporting reasoning. Code snippets and architectural diagrams welcome when they illustrate the point.
-DO NOT RETURN: Exhaustive enumeration of all alternatives considered, or lengthy preamble before reaching the conclusion.
-```
-
-**Magos Fabricator (fixer / category tasks):**
-```
-RETURN FORMAT: Summary of changes made, files modified, and verification result. Brief explanation of approach taken.
-DO NOT RETURN: Full file contents after edit, raw diff output, or verbose intermediate tool results.
-```
-
-### The File-Output Escape Valve
-
-For tasks that MUST produce verbose output (large analysis, multi-file audits), instruct the subagent to write results to disk instead:
-
-```
-Write your full analysis to .tmp/<task-name>.md
-RETURN FORMAT: "Complete. Full results at .tmp/<task-name>.md" + executive summary of key findings.
-```
-
-The orchestrator reads the file only if needed — keeping the main context clean.
-
-### Why This Matters
-
-Without output isolation, a single subagent can inject 50-200K tokens of raw tool output into the orchestrator's context. With DCP's `allowSubAgents` enabled, the system now intelligently merges subagent final text during compaction — but the final text must be concise in the first place.
+Every `task()` prompt MUST include `RETURN FORMAT:` and `DO NOT RETURN:` sections. Full output contracts by agent type: skill `subagent-contracts`. File-output escape: write verbose results to `.tmp/<task>.md`, return summary only.
 
 ## Git Submodule Awareness
 
@@ -204,72 +159,10 @@ This forge-world uses git submodules in certain repositories. When reviewing cha
 - Use `git diff --ignore-submodules=all` if submodule pointer changes are irrelevant to your review scope.
 - When performing `git blame` or `git log` on paths inside submodules, you must `cd` into the submodule directory first — these commands operate on the submodule's own git history, not the parent repository.
 
-## Migration History (oh-my-openagent retired 2026-06-01)
-
-> **~~Bun npm Client Incompatibility~~ (RESOLVED — opencode v1.15.6, 2026-05-21):** ~~Resolved with migration to oh-my-opencode-slim. The sacred-designation.sh patching rite and all oh-my-openagent workarounds are fully retired. No dist patching is required.~~
-
 ## Forge-World Characteristics
 
 > **No XPU Device (2026-04-10):** This forge-world has **no Intel XPU (discrete GPU) device** installed. Do NOT attempt to run any scripts, tests, benchmarks, or workloads that target XPU hardware (`intel_extension_for_pytorch`, `xpu` device targets, `sycl` runtimes, etc.). Any command referencing XPU execution will fail. If a task involves XPU code, limit your work to **editing, reviewing, and static analysis only** — never invoke or execute it locally.
 
-## Forge Memory Protocol
+## Forge Memory
 
-Persistent memory follows Karpathy's compiler model: raw `tasks/*.md` (source) → AI compiler → topical wiki files (executable). All managed by `bash ~/.config/opencode/rites/forge-memory.sh`.
-
-### Autonomous Triggers (run without being asked)
-- **On session start (first tool use)**: run `bash ~/.config/opencode/rites/forge-memory.sh autostart`. If output line `needs-compile: yes` appears, dispatch the Compile Pass as a **subtask** (do NOT run it inline — it must not pollute the main conversation context). Subtask prompt: *"Run the forge-memory Compile Pass. First run `bash ~/.config/opencode/rites/forge-memory.sh path --key` to get the project key. Load skill forge-memory, follow the Compile Pass workflow steps exactly, write all wiki topic files, update _index.md last-compiled marker. Return: 'Compiled N entries → updated M wiki files. K contradictions flagged.' Nothing else."*
-- **On session start**: immediately Read `$(bash ~/.config/opencode/rites/forge-memory.sh path --global-knowledge)/_index.md` (global) AND the per-project `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/_index.md` if it exists. These are mandatory reads, not optional.
-- **After every 5 new journal entries** in current project: same — dispatch Compile Pass as a subtask (same prompt as above).
-
-### Knowledge (proactive — load before acting)
-- **Before any implementation task**: Read `patterns.md` and `gotchas.md` for the current project wiki. Check for prior decisions in `decisions.md`.
-- **Before debugging**: Read `gotchas.md` first — known pitfalls are recorded there.
-- **Before using a tool/library**: Read `tools.md` for accumulated tool-specific knowledge.
-- **When something seems surprising or wrong**: Read `open-questions.md` — contradictions are flagged there.
-- Topical files live at `$(bash ~/.config/opencode/rites/forge-memory.sh path --knowledge)/topics/` (per-project) or `$(bash ~/.config/opencode/rites/forge-memory.sh path --global-knowledge)/topics/` (global).
-- Topical files are COMPILED OUTPUT — write only via Compile Pass workflow, not raw appends.
-
-### Knowledge Markers (emit when relevant)
-
-When you discover something future sessions should know, embed markers as blockquotes at the end of your response. The colored emoji signals the type; the forge-memory plugin extracts them from raw message content.
-
-> 🔵 forge:decision: Chose X over Y because Z
-> 🟡 forge:gotcha: BSD date lacks -d flag; use date -j -f instead
-> 🟢 forge:pattern: Always wrap client.session.prompt() in try/catch — throws on timeout
-> 🟣 forge:open_question: Why does session.abort() not clean up child session state?
-
-**If you were corrected during the session**, emit a retraction:
-> 🟠 forge:retract: the wrong claim from earlier, verbatim or close paraphrase
-
-**If corrections occurred**, emit a session-summary blockquote as your final substantive response. This supersedes ALL individual markers:
-> forge:session-summary
-> decision: final correct choice and why
-> gotcha: confirmed pitfall (post-correction)
-> pattern: confirmed reusable technique
-> retracted: the earlier wrong claim
-> confidence: high
-
-Rules:
-- 3–5 markers max per session; emit them at the END of your response, not mid-prose
-- The forge-memory plugin harvests them automatically — no manual action needed
-- When you emit a `forge:session-summary`, ALL individual markers are ignored — the summary is authoritative
-
-### Task Journal (write on completion — MANDATORY)
-
-**After completing any non-trivial task (≥3 tool calls), you MUST write a journal entry BEFORE responding to the Archmagos.**
-
-Steps — do not skip, do not defer:
-1. Run `bash ~/.config/opencode/rites/forge-memory.sh new <slug>` — prints the stub path
-2. Immediately `Read` the stub, then `Edit` it to fill in Goal / Outcome / Notes (≤25 lines total, follow template in `_index.md`)
-3. Slug format: `short-task-desc` (e.g. `fix-memory-hook`) — the script auto-prepends date and time to the filename
-
-Enforcement rules:
-- The forge-memory-plugin auto-writes a background `status: auto-draft` entry on `session.idle` if none exists — this is the fallback (triggers at ≥5 tool calls), not the primary path
-- Write manually for richer entries; auto-drafts capture tool titles and first user message but lack deep context
-- Skip manual write ONLY if the entire task used fewer than 3 tool calls
-- Coverage gap: sessions with exactly 3-4 tool calls rely solely on manual journaling (plugin threshold is 5)
-- One entry per logical task — batch multiple small fixes into one entry if done in sequence
-- Per-project storage is out-of-tree at `~/.local/share/opencode-forge/{project-key}/` — never inside foreign repos
-- Note: if `XDG_DATA_HOME` is set to a non-default value, update `opencode.json` permission `external_directory` to match
-- After every 5 new entries: dispatch Compile Pass as a subtask (same prompt as in Autonomous Triggers above)
-- Reports/pruning: `bash ~/.config/opencode/rites/forge-memory.sh report 7d` or `prune --dry-run`
+Journal manually at ≥3 tool calls; plugin auto-drafts at ≥5 (fallback). On session start: run `forge-memory.sh autostart`; read global + project `_index.md`. Before any implementation: read `patterns.md`, `gotchas.md`. Emit ≤3–5 forge:markers at response end when durable knowledge was discovered. Full protocol (triggers, journal steps, marker syntax): skill `forge-memory`.
