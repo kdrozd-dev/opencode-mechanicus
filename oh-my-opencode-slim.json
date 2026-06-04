@@ -1,7 +1,18 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "mechanicus",
+  "preset": "budget",
   "presets": {
+    "budget": {
+      "orchestrator": { "model": "github-copilot/claude-sonnet-4.6", "variant": "max", "displayName": "Magos-Dominus", "skills": ["*"], "mcps": ["*", "!context7"] },
+      "oracle": { "model": "github-copilot/gpt-5.3-codex", "variant": "high", "displayName": "Logis-Magna", "skills": ["simplify"], "mcps": [] },
+      "librarian": { "model": "github-copilot/grok-code-fast-1", "displayName": "Lexmechanic", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
+      "explorer": { "model": "github-copilot/grok-code-fast-1", "variant": "low", "displayName": "Skitarii", "skills": [], "mcps": [] },
+      "fixer": { "model": "github-copilot/claude-sonnet-4.6", "displayName": "Magos-Fabricator", "skills": [], "mcps": [] },
+      "designer": { "model": "github-copilot/gemini-3.1-pro-preview", "variant": "high", "displayName": "Artisan-Aesthetica", "skills": [], "mcps": [] },
+      "observer": { "model": "github-copilot/gemini-3.1-pro-preview", "displayName": "Omnispex-Adept", "skills": [], "mcps": [] },
+      "council": { "model": "github-copilot/gpt-5.5", "variant": "high", "displayName": "Synod-Primus", "skills": [], "mcps": [] },
+      "councillor": { "model": "github-copilot/gpt-5-mini", "displayName": "Synodite", "skills": [], "mcps": [] }
+    },
     "mechanicus": {
       "orchestrator": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "variant": "max", "displayName": "Magos-Dominus", "skills": ["*"], "mcps": ["*", "!context7"] },
       "oracle": { "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1", "variant": "high", "displayName": "Logis-Magna", "skills": ["simplify"], "mcps": [] },
@@ -18,33 +29,33 @@
   "council": {
     "presets": {
       "lean": {
-        "claude": {
-          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+        "grok": {
+          "model": "github-copilot/grok-code-fast-1"
         }
       },
       "default": {
         "claude": {
-          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
+          "model": "github-copilot/claude-sonnet-4.6"
         },
         "gpt": {
           "model": "github-copilot/gpt-5.5"
         },
-        "kimi": {
-          "model": "bedrock-mantle/moonshotai.kimi-k2.5"
+        "codex": {
+          "model": "github-copilot/gpt-5.3-codex"
         }
       },
       "max": {
         "claude": {
-          "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6"
-        },
-        "claude-opus": {
-          "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1"
+          "model": "github-copilot/claude-sonnet-4.6"
         },
         "gpt": {
           "model": "github-copilot/gpt-5.5"
         },
-        "kimi": {
-          "model": "bedrock-mantle/moonshotai.kimi-k2.5"
+        "codex": {
+          "model": "github-copilot/gpt-5.3-codex"
+        },
+        "gemini": {
+          "model": "github-copilot/gemini-3.1-pro-preview"
         }
       }
     },

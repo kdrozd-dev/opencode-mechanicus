@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": false,
-  "small_model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "small_model": "github-copilot/grok-code-fast-1",
   "enabled_providers": [
     "amazon-bedrock",
     "github-copilot",
@@ -219,6 +219,6 @@
   },
   "agent": {
     "compaction": { "model": "github-copilot/gpt-5.5" },
-    "explore": { "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0" }
+    "explore": { "model": "github-copilot/grok-code-fast-1" }
   }
 }
