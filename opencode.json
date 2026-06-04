@@ -5,7 +5,8 @@
   "enabled_providers": [
     "amazon-bedrock",
     "github-copilot",
-    "bedrock-mantle"
+    "bedrock-mantle",
+    "google-vertex"
   ],
   "plugin": [
     "./node_modules/oh-my-opencode-slim",
@@ -31,6 +32,13 @@
         "chunkTimeout": 120000,
         "headerTimeout": 30000
       }
+    },
+    "google-vertex": {
+      "whitelist": [
+        "gemini-3-flash-preview",
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-flash-lite-preview"
+      ]
     },
     "bedrock-mantle": {
       "npm": "@ai-sdk/openai-compatible",
