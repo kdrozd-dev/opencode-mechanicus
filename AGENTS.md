@@ -165,4 +165,10 @@ This forge-world uses git submodules in certain repositories. When reviewing cha
 
 ## Forge Memory
 
-Journal manually at ≥3 tool calls; plugin auto-drafts at ≥5 (fallback). On session start: run `forge-memory.sh autostart`; read global + project `_index.md`. Before any implementation: read `patterns.md`, `gotchas.md`. Emit ≤3–5 forge:markers at response end when durable knowledge was discovered. Full protocol (triggers, journal steps, marker syntax): skill `forge-memory`.
+Journal manually at ≥3 tool calls; plugin auto-drafts at ≥5 (fallback). Emit ≤3–5 `forge:` markers at response end when durable knowledge is discovered. Full protocol (triggers, journal steps, marker syntax): **load skill `forge-memory` before any journaling, compile pass, or forge operation** — the skill contains the authoritative workflow. Follow it exactly.
+
+> ⚠️ **Four invariants — never violate:**
+> 1. **Session start — forge knowledge is auto-injected** by the forge-memory plugin into the system prompt. If no forge context appears (check for `forge-inject:` marker), fall back to: run `bash ~/.config/opencode/rites/forge-memory.sh autostart` and read the project's `_index.md`.
+> 2. **Before implementation — verify forge context is present.** The plugin auto-injects gotchas and patterns. If the system prompt contains `forge-inject:`, you already have the knowledge. If not, read `gotchas.md` and `patterns.md` from the active project's forge knowledge directory (`forge-memory.sh path --knowledge`). Files live under the `topics/` subdirectory.
+> 3. **Never directly edit** topic wiki files (`gotchas.md`, `patterns.md`, `decisions.md`, etc.) — they are compiled output. Only a Compile Pass may write them.
+> 4. **Compile Pass is automated** by the plugin (triggers after journaling when ≥5 new entries). Manual compile is only needed if the plugin fails — dispatch as subtask, then run `forge-memory.sh generate-inject`.

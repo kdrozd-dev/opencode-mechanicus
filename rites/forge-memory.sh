@@ -13,6 +13,7 @@ set -euo pipefail
 #    forge-memory.sh prune [--dry-run] [--days N]
 #    forge-memory.sh report <timespan>
 #    forge-memory.sh compile-prep [--since SPEC]
+#    forge-memory.sh generate-inject [local|global]
 #    forge-memory.sh autostart
 #    forge-memory.sh -h|--help
 #
@@ -316,15 +317,20 @@ cmd_compile_prep() {
   printf '\n## New Journal Entries\n'
   if [[ ${#selected[@]} -gt 0 ]]; then
     for f in "${selected[@]}"; do
-      local rel title goal outcome
+      local rel title goal outcome insights
       rel="${f#${FORGE_ROOT}/}"
       title=$(parse_title "$f")
       goal=$(grep -A2 '^## Goal' "$f" 2>/dev/null | grep '^-' | head -1 \
              | sed 's/^- *//' | cut -c1-80 || true)
       outcome=$(grep -A2 '^## Outcome' "$f" 2>/dev/null | grep '^-' | head -1 \
                 | sed 's/^- *//' | cut -c1-80 || true)
+      # Extract ## Insights section (confidence-tagged knowledge lines)
+      insights=$(sed -n '/^## Insights$/,/^## /{/^## Insights$/d;/^## /d;p;}' "$f" 2>/dev/null || true)
       printf '\n### %s\nTitle: %s\nGoal: %s\nOutcome: %s\n' \
         "$rel" "$title" "${goal:-(none)}" "${outcome:-(none)}"
+      if [[ -n "$insights" ]]; then
+        printf 'Insights:\n%s\n' "$insights"
+      fi
     done
   fi
   printf '\n## Current Wiki State\n\n'
@@ -429,6 +435,182 @@ cmd_complete() {
   printf 'file: %s\n' "$target"
 }
 
+# ── generate-inject subcommand ─────────────────────────────────────────────────
+# Builds inject.md from topic wiki files with whole-entry budget enforcement.
+# Priority: gotchas (Tier 1) → patterns (Tier 2) → decisions (Tier 3) → tools (Tier 4)
+# Budget: 2000 chars for project, 800 chars for global.
+
+cmd_generate_inject() {
+  local scope="${1:-local}"
+  local budget
+  if [[ "$scope" == "global" ]]; then
+    budget=800
+  else
+    budget=2000
+  fi
+
+  local key wiki_dir
+  if [[ "$scope" == "global" ]]; then
+    wiki_dir="${FORGE_ROOT}/_global/wiki"
+    key="_global"
+  else
+    key=$(get_key)
+    wiki_dir="${FORGE_ROOT}/${key}/wiki"
+  fi
+
+  local topics_dir="${wiki_dir}/topics"
+  local inject_file="${wiki_dir}/inject.md"
+
+  if [[ ! -d "$topics_dir" ]]; then
+    printf 'generate-inject: no topics directory at %s\n' "$topics_dir" >&2
+    exit 1
+  fi
+
+  # Read last-compiled timestamp from _index.md
+  local index_file="${wiki_dir}/_index.md"
+  local last_compiled
+  last_compiled=$(read_last_compiled "$index_file")
+  local needs_compile="no"
+  # Determine needs-compile from autostart logic (simplified check)
+  if [[ "$last_compiled" == "never" ]]; then
+    needs_compile="yes"
+  fi
+
+  # Extract entries from a topic file (lines starting with "- " under "## Entries")
+  # Returns entries one per line.
+  extract_entries() {
+    local file="$1"
+    [[ -f "$file" ]] || return
+    local in_entries=false
+    while IFS= read -r line; do
+      if [[ "$line" == "## Entries" ]]; then
+        in_entries=true
+        continue
+      fi
+      # Stop at next heading
+      if [[ "$in_entries" == true && "$line" =~ ^##[[:space:]] ]]; then
+        break
+      fi
+      if [[ "$in_entries" == true && "$line" =~ ^-[[:space:]] ]]; then
+        printf '%s\n' "$line"
+      fi
+    done < "$file"
+  }
+
+  # Collect entries in priority order
+  local -a tier1=() tier2=() tier3=() tier4=()
+
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && tier1+=("$entry")
+  done < <(extract_entries "${topics_dir}/gotchas.md")
+
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && tier2+=("$entry")
+  done < <(extract_entries "${topics_dir}/patterns.md")
+
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && tier3+=("$entry")
+  done < <(extract_entries "${topics_dir}/decisions.md")
+
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && tier4+=("$entry")
+  done < <(extract_entries "${topics_dir}/tools.md")
+
+  # Build inject content with whole-entry budget enforcement
+  local current_size=0
+  local -a selected_gotchas=() selected_patterns=() selected_decisions=() selected_tools=()
+  local entry_len
+
+  # Tier 1: Gotchas
+  for entry in "${tier1[@]}"; do
+    entry_len=${#entry}
+    if (( current_size + entry_len + 1 > budget )); then
+      break
+    fi
+    selected_gotchas+=("$entry")
+    current_size=$((current_size + entry_len + 1))
+  done
+
+  # Tier 2: Patterns
+  for entry in "${tier2[@]}"; do
+    entry_len=${#entry}
+    if (( current_size + entry_len + 1 > budget )); then
+      break
+    fi
+    selected_patterns+=("$entry")
+    current_size=$((current_size + entry_len + 1))
+  done
+
+  # Tier 3: Decisions
+  for entry in "${tier3[@]}"; do
+    entry_len=${#entry}
+    if (( current_size + entry_len + 1 > budget )); then
+      break
+    fi
+    selected_decisions+=("$entry")
+    current_size=$((current_size + entry_len + 1))
+  done
+
+  # Tier 4: Tools
+  for entry in "${tier4[@]}"; do
+    entry_len=${#entry}
+    if (( current_size + entry_len + 1 > budget )); then
+      break
+    fi
+    selected_tools+=("$entry")
+    current_size=$((current_size + entry_len + 1))
+  done
+
+  # If nothing to inject, remove stale inject.md and exit
+  local total_entries=$(( ${#selected_gotchas[@]} + ${#selected_patterns[@]} + ${#selected_decisions[@]} + ${#selected_tools[@]} ))
+  if [[ $total_entries -eq 0 ]]; then
+    rm -f "$inject_file"
+    printf 'generate-inject: no entries to inject (removed stale inject.md)\n'
+    exit 0
+  fi
+
+  # Write inject.md
+  {
+    printf '<!-- forge-inject: project=%s compiled=%s needs-compile=%s -->\n\n' \
+      "$key" "$last_compiled" "$needs_compile"
+
+    if [[ ${#selected_gotchas[@]} -gt 0 ]]; then
+      printf '## Critical Gotchas\n'
+      for entry in "${selected_gotchas[@]}"; do
+        printf '%s\n' "$entry"
+      done
+      printf '\n'
+    fi
+
+    if [[ ${#selected_patterns[@]} -gt 0 ]]; then
+      printf '## Blessed Patterns\n'
+      for entry in "${selected_patterns[@]}"; do
+        printf '%s\n' "$entry"
+      done
+      printf '\n'
+    fi
+
+    if [[ ${#selected_decisions[@]} -gt 0 ]]; then
+      printf '## Key Decisions\n'
+      for entry in "${selected_decisions[@]}"; do
+        printf '%s\n' "$entry"
+      done
+      printf '\n'
+    fi
+
+    if [[ ${#selected_tools[@]} -gt 0 ]]; then
+      printf '## Tools\n'
+      for entry in "${selected_tools[@]}"; do
+        printf '%s\n' "$entry"
+      done
+      printf '\n'
+    fi
+  } > "$inject_file"
+
+  printf 'generate-inject: %d entries (%d chars) → %s\n' \
+    "$total_entries" "$current_size" "$inject_file"
+}
+
 cmd_set_compiled() {
   local key wiki_dir index_file now
   key=$(get_key)
@@ -451,6 +633,7 @@ Usage:
   forge-memory.sh prune [--dry-run] [--days N] [--not-newer-than FILE]
   forge-memory.sh report <timespan>
   forge-memory.sh compile-prep [--since SPEC]
+  forge-memory.sh generate-inject [local|global]
   forge-memory.sh set-compiled
   forge-memory.sh autostart
   forge-memory.sh -h|--help
@@ -490,6 +673,13 @@ Subcommands:
       Output includes Current-time (system clock) to detect AI clock drift.
       Warns to stderr if last-compiled marker is ahead of system clock.
 
+  generate-inject [local|global]
+      Build inject.md from topic wiki files for plugin auto-injection.
+      Enforces whole-entry budget (2000 chars local, 800 chars global).
+      Priority: gotchas → patterns → decisions → tools.
+      No entry is ever truncated — budget stops at entry boundaries.
+      Should be run after each compile pass.
+
   set-compiled
       Write the real system clock to the last-compiled marker in _index.md.
       Always use this (never Edit the marker manually) to prevent AI clock drift.
@@ -507,15 +697,16 @@ USAGE
 
 # ── Dispatch ───────────────────────────────────────────────────────────────────
 case "${1:-}" in
-  path)         cmd_path "${@:2}" ;;
-  new)          cmd_new "${@:2}" ;;
-  complete)     cmd_complete "${@:2}" ;;
-  prune)        cmd_prune "${@:2}" ;;
-  report)       cmd_report "${@:2}" ;;
-  compile-prep) cmd_compile_prep "${@:2}" ;;
-  set-compiled) cmd_set_compiled ;;
-  autostart)    cmd_autostart ;;
-  -h|--help|"") usage; exit 0 ;;
-  *)            printf 'Unknown subcommand: %s\n' "$1" >&2
-                usage >&2; exit 1 ;;
+  path)            cmd_path "${@:2}" ;;
+  new)             cmd_new "${@:2}" ;;
+  complete)        cmd_complete "${@:2}" ;;
+  prune)           cmd_prune "${@:2}" ;;
+  report)          cmd_report "${@:2}" ;;
+  compile-prep)    cmd_compile_prep "${@:2}" ;;
+  generate-inject) cmd_generate_inject "${@:2}" ;;
+  set-compiled)    cmd_set_compiled ;;
+  autostart)       cmd_autostart ;;
+  -h|--help|"")    usage; exit 0 ;;
+  *)               printf 'Unknown subcommand: %s\n' "$1" >&2
+                   usage >&2; exit 1 ;;
 esac
