@@ -1,21 +1,29 @@
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, appendFileSync, copyFileSync, mkdirSync } from "node:fs";
 
 const id = "forge-memory-plugin";
-const FORGE_SCRIPT = join(homedir(), ".config/opencode/rites/forge-memory.sh");
-const TOOL_CALL_THRESHOLD = 5;
 const HOME = homedir();
+const FORGE_SCRIPT = join(HOME, ".config/opencode/rites/forge-memory.sh");
+const PLUGIN_DIR = join(HOME, ".config/opencode/forge-memory-plugin");
+const SKILL_SRC = join(PLUGIN_DIR, "skills", "forge-memory", "SKILL.md");
+const SKILL_DEST_DIR = join(HOME, ".claude", "skills", "forge-memory");
+const SKILL_DEST = join(SKILL_DEST_DIR, "SKILL.md");
+const TOOL_CALL_THRESHOLD = 5;
 const FORGE_ROOT = process.env.XDG_DATA_HOME
   ? join(process.env.XDG_DATA_HOME, "opencode-forge")
   : join(HOME, ".local/share/opencode-forge");
-const INJECT_MARKER = "forge-inject:";
+// Dedup marker must be specific enough to not match documentation prose that
+// mentions the marker. AGENTS.md discusses "forge-inject:" in text, so we match
+// the full HTML comment prefix that only appears in actual injected content.
+const INJECT_MARKER = "<!-- forge-inject:";
 // Runtime defensive cap — must be > shell generation budget (2000) to accommodate
 // header/marker overhead. If inject.md somehow exceeds this, truncateAtEntryBoundary
 // ensures no partial entries leak through.
 const PROJECT_BUDGET = 2500;
 const GLOBAL_BUDGET = 800;
+const FORGE_DEBUG = process.env.FORGE_DEBUG === "1";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -751,7 +759,7 @@ function loadRawTopicsFallback(wikiDir, budget) {
 
   if (sections.length === 0) return null;
 
-  return `<!-- ${INJECT_MARKER} fallback=true -->\n\n${sections.join("\n\n")}`;
+  return `<!-- forge-inject: fallback=true -->\n\n${sections.join("\n\n")}`;
 }
 
 /**
@@ -787,6 +795,14 @@ async function resolveWikiDir(cwd) {
 // ── Plugin entry point ────────────────────────────────────────────────────────
 
 const server = async ({ client, directory }) => {
+  // ── Skill sync: keep ~/.claude/skills/forge-memory/SKILL.md up to date ───
+  try {
+    if (existsSync(SKILL_SRC)) {
+      mkdirSync(SKILL_DEST_DIR, { recursive: true });
+      copyFileSync(SKILL_SRC, SKILL_DEST);
+    }
+  } catch { /* best-effort — never block startup */ }
+
   let smallModel = null;
   const seen = new Set();
 
@@ -825,8 +841,14 @@ const server = async ({ client, directory }) => {
       }
 
       cachedInjectContent = parts.length > 0 ? parts.join("\n\n---\n\n") : "";
-    } catch {
+    } catch (err) {
       cachedInjectContent = "";
+      if (FORGE_DEBUG) try {
+        appendFileSync(
+          join(HOME, ".local/share/opencode-forge/inject-debug.log"),
+          `[${new Date().toISOString()}] doLoadInject ERROR: ${err?.message || err}\n${err?.stack || ""}\n`,
+        );
+      } catch { /* best-effort */ }
     }
   }
 
@@ -847,16 +869,38 @@ const server = async ({ client, directory }) => {
       await loadInjectOnce();
 
       // Nothing to inject
-      if (!cachedInjectContent) return;
+      if (!cachedInjectContent) {
+        if (FORGE_DEBUG) try {
+          appendFileSync(
+            join(HOME, ".local/share/opencode-forge/inject-debug.log"),
+            `[${new Date().toISOString()}] no content: cachedInjectContent=${JSON.stringify(cachedInjectContent)}, directory=${directory}\n`,
+          );
+        } catch { /* best-effort debug */ }
+        return;
+      }
 
       // Deduplication guard — don't inject twice
       const alreadyInjected = output.system.some(
         (s) => typeof s === "string" && s.includes(INJECT_MARKER),
       );
-      if (alreadyInjected) return;
+      if (alreadyInjected) {
+        if (FORGE_DEBUG) try {
+          appendFileSync(
+            join(HOME, ".local/share/opencode-forge/inject-debug.log"),
+            `[${new Date().toISOString()}] dedup guard fired: system has ${output.system.length} segments, marker found in existing content\n`,
+          );
+        } catch { /* best-effort debug */ }
+        return;
+      }
 
       // Inject as a new system prompt segment
       output.system.push(cachedInjectContent);
+      if (FORGE_DEBUG) try {
+        appendFileSync(
+          join(HOME, ".local/share/opencode-forge/inject-debug.log"),
+          `[${new Date().toISOString()}] SUCCESS: injected ${cachedInjectContent.length} chars\n`,
+        );
+      } catch { /* best-effort debug */ }
     },
 
     event: async ({ event }) => {
