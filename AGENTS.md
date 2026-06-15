@@ -150,6 +150,16 @@ The forge-world now runs on `oh-my-opencode-slim`. The following commands replac
 
 Every `task()` prompt MUST include `RETURN FORMAT:` and `DO NOT RETURN:` sections. Full output contracts by agent type: skill `subagent-contracts`. File-output escape: write verbose results to `.tmp/<task>.md`, return summary only.
 
+## Subagent Input Budget
+
+Every `task()` and `subtask()` prompt must observe an **8K character budget** on the context payload — the "here is what you need to know" block passed to child sessions.
+
+Budget rules:
+- **Never inline file contents** — pass the file path via the `files:` parameter and let the child session read via tool calls. Tool calls are cheap; a 300K-token cold cache write is not.
+- **Never relay forge memory, conversation history, or system knowledge** beyond the specific extracted fact the task requires.
+- **Never paste multi-file code dumps** — reference by `path:line-range`.
+- **Summarize context; do not replicate it.** One crisp paragraph of "why" is sufficient for a well-scoped child task.
+
 ## Git Submodule Awareness
 
 This forge-world uses git submodules in certain repositories. When reviewing changes or analyzing diffs:
