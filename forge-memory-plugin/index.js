@@ -7,9 +7,8 @@ const id = "forge-memory-plugin";
 const HOME = homedir();
 const FORGE_SCRIPT = join(HOME, ".config/opencode/rites/forge-memory.sh");
 const PLUGIN_DIR = join(HOME, ".config/opencode/forge-memory-plugin");
-const SKILL_SRC = join(PLUGIN_DIR, "skills", "forge-memory", "SKILL.md");
-const SKILL_DEST_DIR = join(HOME, ".claude", "skills", "forge-memory");
-const SKILL_DEST = join(SKILL_DEST_DIR, "SKILL.md");
+// Skills bundled in this plugin — deployed to ~/.claude/skills/ on startup
+const BUNDLED_SKILLS = ["forge-memory", "subagent-contracts", "investigate-issue"];
 const TOOL_CALL_THRESHOLD = 5;
 const FORGE_ROOT = process.env.XDG_DATA_HOME
   ? join(process.env.XDG_DATA_HOME, "opencode-forge")
@@ -795,13 +794,17 @@ async function resolveWikiDir(cwd) {
 // ── Plugin entry point ────────────────────────────────────────────────────────
 
 const server = async ({ client, directory }) => {
-  // ── Skill sync: keep ~/.claude/skills/forge-memory/SKILL.md up to date ───
-  try {
-    if (existsSync(SKILL_SRC)) {
-      mkdirSync(SKILL_DEST_DIR, { recursive: true });
-      copyFileSync(SKILL_SRC, SKILL_DEST);
-    }
-  } catch { /* best-effort — never block startup */ }
+  // ── Skill sync: deploy bundled skills to ~/.claude/skills/ on startup ────
+  for (const skillName of BUNDLED_SKILLS) {
+    try {
+      const src = join(PLUGIN_DIR, "skills", skillName, "SKILL.md");
+      const destDir = join(HOME, ".claude", "skills", skillName);
+      if (existsSync(src)) {
+        mkdirSync(destDir, { recursive: true });
+        copyFileSync(src, join(destDir, "SKILL.md"));
+      }
+    } catch { /* best-effort — never block startup */ }
+  }
 
   let smallModel = null;
   const seen = new Set();
