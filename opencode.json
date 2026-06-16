@@ -11,7 +11,8 @@
   "plugin": [
     "./node_modules/oh-my-opencode-slim",
     "./node_modules/@tarquinen/opencode-dcp",
-    "./forge-memory-plugin"
+    "./forge-memory-plugin",
+    "cc-safety-net"
   ],
   "compaction": {
     "reserved": 32000,
@@ -94,7 +95,7 @@
     "external_directory": {
       "~/.local/share/opencode-forge/**": "allow",
       "~/.claude/**": "allow",
-      "/tmp/opencode/**": "allow"
+      "/tmp/**": "allow"
     },
     "gtax": {
       "gtax_reservations_create": "ask",

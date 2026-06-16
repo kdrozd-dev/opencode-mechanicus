@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFileSync, writeFileSync, existsSync, appendFileSync, copyFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, appendFileSync, copyFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
 
 const id = "forge-memory-plugin";
 const HOME = homedir();
@@ -10,6 +10,10 @@ const PLUGIN_DIR = join(HOME, ".config/opencode/forge-memory-plugin");
 // Skills bundled in this plugin — deployed to ~/.claude/skills/ on startup
 const BUNDLED_SKILLS = ["forge-memory", "subagent-contracts", "investigate-issue"];
 const TOOL_CALL_THRESHOLD = 5;
+// Minimum interval between compile attempts. Prevents a retry storm when
+// autoCompile keeps returning false (e.g. LLM emits unparseable output) since
+// a failed compile does not advance the set-compiled pointer.
+const COMPILE_COOLDOWN_MS = 10 * 60 * 1000;
 const FORGE_ROOT = process.env.XDG_DATA_HOME
   ? join(process.env.XDG_DATA_HOME, "opencode-forge")
   : join(HOME, ".local/share/opencode-forge");
@@ -23,25 +27,71 @@ const INJECT_MARKER = "<!-- forge-inject:";
 const PROJECT_BUDGET = 2500;
 const GLOBAL_BUDGET = 800;
 const FORGE_DEBUG = process.env.FORGE_DEBUG === "1";
+// Fallback model if config hook doesn't fire or small_model is unset
+const DEFAULT_SMALL_MODEL = { providerID: "amazon-bedrock", modelID: "global.anthropic.claude-haiku-4-5-20251001-v1:0" };
+// Explicit agent for child compile/distill sessions. Required because the
+// configured DEFAULT agent ("orchestrator") is hidden — prompting without an
+// explicit agent makes the server fall back to the hidden default and throw
+// "default agent orchestrator is hidden" (HTTP 500), leaving an empty session.
+// "explore" is a defined, non-hidden subagent that uses the small model.
+const COMPILE_AGENT = "explore";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-function runCmd(cmd) {
-  return new Promise((resolve) => {
-    const child = spawn("bash", ["-c", cmd], {
-      env: process.env,
-      stdio: ["ignore", "pipe", "ignore"],
-    });
-    let out = "";
-    child.stdout.on("data", (d) => {
-      out += d.toString();
-    });
-    child.on("error", () => resolve(null));
-    child.on("close", () => resolve(out.trim() || null));
-  });
+function parseModelRef(ref) {
+  if (!ref) return null;
+  if (typeof ref === "object" && ref.providerID && ref.modelID) return ref;
+  if (typeof ref !== "string") return null;
+  const idx = ref.indexOf("/");
+  if (idx < 1) return null;
+  const providerID = ref.slice(0, idx);
+  const modelID = ref.slice(idx + 1);
+  if (!modelID) return null;
+  return { providerID, modelID };
 }
 
-function runForgeScript(args, cwd) {
+function compileLog(msg) {
+  try {
+    appendFileSync(
+      join(FORGE_ROOT, "compile-debug.log"),
+      `[${new Date().toISOString()}] ${msg}\n`,
+    );
+  } catch { /* best-effort */ }
+}
+
+// Extract a JSON object from a model response. Strips markdown code fences
+// (```json ... ```), then matches the outermost brace span, then parses.
+// Returns the parsed object, or null if no valid JSON is present. This avoids
+// the greedy-regex failure where prose braces or fences corrupt the match.
+function extractJsonObject(text) {
+  if (!text) return null;
+  const unfenced = text.replace(/```(?:json)?\s*\n?([\s\S]*?)\n?```/g, "$1");
+  const match = unfenced.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[0]);
+  } catch {
+    return null;
+  }
+}
+
+// Build a map of all tool IDs set to false, so the child compile/distill session
+// never attempts to load or call tools. A fresh child session that inherits the
+// orchestrator's full MCP toolset can die silently during tool init, leaving an
+// empty session. Disabling tools matches the proven oh-my-opencode-slim pattern.
+async function buildDisabledTools(client) {
+  try {
+    const res = await client.tool.ids({ responseStyle: "data", throwOnError: true });
+    const ids = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    if (ids.length === 0) return null;
+    return Object.fromEntries(ids.map((id) => [id, false]));
+  } catch (err) {
+    compileLog(`buildDisabledTools ERROR: ${err?.message || err}`);
+    return null;
+  }
+}
+
+function runForgeScript(args, cwd, timeoutMs = 30000) {
   return new Promise((resolve) => {
     const child = spawn("bash", [FORGE_SCRIPT, ...args], {
       env: process.env,
@@ -49,11 +99,22 @@ function runForgeScript(args, cwd) {
       stdio: ["ignore", "pipe", "ignore"],
     });
     let out = "";
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(val);
+    };
+    const timer = setTimeout(() => {
+      try { child.kill(); } catch { /* best-effort */ }
+      finish(null);
+    }, timeoutMs);
     child.stdout.on("data", (d) => {
       out += d.toString();
     });
-    child.on("error", () => resolve(null));
-    child.on("close", () => resolve(out.trim() || null));
+    child.on("error", () => finish(null));
+    child.on("close", () => finish(out.trim() || null));
   });
 }
 
@@ -79,12 +140,18 @@ async function countToolCalls(client, sessionID) {
 
 async function hasRecentEntries(cwd) {
   const tasksDir = await runForgeScript(["path", "--tasks"], cwd);
-  if (!tasksDir) return false;
+  if (!tasksDir || !existsSync(tasksDir)) return false;
   const today = new Date().toISOString().slice(0, 10);
-  const count = await runCmd(
-    `find "${tasksDir}" -name "${today}*.md" -mmin -15 -type f 2>/dev/null | wc -l`,
-  );
-  return parseInt(count ?? "0", 10) > 0;
+  const cutoff = Date.now() - 15 * 60 * 1000;
+  try {
+    for (const name of readdirSync(tasksDir)) {
+      if (!name.startsWith(today) || !name.endsWith(".md")) continue;
+      if (statSync(join(tasksDir, name)).mtimeMs >= cutoff) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 // ── Tool metadata extraction ──────────────────────────────────────────────────
@@ -221,9 +288,8 @@ function extractMarkers(messages) {
       const text = part.text ?? "";
 
       for (const [, type, content] of text.matchAll(MARKER_RE)) {
-        const key =
-          type === "open_question" ? "open_questions" : `${type}s`;
-        if (MARKER_KEYS.has(key)) {
+        const key = SUMMARY_KEY_MAP[type];
+        if (key && MARKER_KEYS.has(key)) {
           rawMarkers.push({ msgIdx, key, content: content.replace(/"/g, "'").trim() });
         }
       }
@@ -317,13 +383,16 @@ async function distillKnowledge(client, directory, messages, smallModel) {
     childSessionId = created?.data?.id ?? created?.id;
     if (!childSessionId) return null;
 
+    const distillDisabledTools = await buildDisabledTools(client);
     const result = await client.session.prompt({
       responseStyle: "data",
       throwOnError: true,
       path: { id: childSessionId },
       query: { directory },
       body: {
-        ...(smallModel ? { model: smallModel } : {}),
+        model: smallModel || DEFAULT_SMALL_MODEL,
+        agent: COMPILE_AGENT,
+        ...(distillDisabledTools ? { tools: distillDisabledTools } : {}),
         system:
           "You extract structured knowledge from transcripts. " +
           "Respond ONLY with valid JSON. Do not call any tools. " +
@@ -348,10 +417,16 @@ async function distillKnowledge(client, directory, messages, smallModel) {
       .join("")
       .trim();
 
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    return JSON.parse(match[0]);
-  } catch {
+    const parsed = extractJsonObject(text);
+    if (!parsed) return null;
+    return parsed;
+  } catch (err) {
+    try {
+      appendFileSync(
+        join(HOME, ".local/share/opencode-forge/compile-debug.log"),
+        `[${new Date().toISOString()}] distillKnowledge ERROR: ${err?.message || err}\n${err?.stack || ""}\nchildSessionId=${childSessionId}\n\n`,
+      );
+    } catch { /* best-effort */ }
     return null;
   } finally {
     if (childSessionId) {
@@ -397,9 +472,13 @@ async function checkCompileNeeded(cwd) {
  * Returns true if compile succeeded, false otherwise.
  */
 async function autoCompile(client, cwd, smallModel) {
+  compileLog(`autoCompile ENTRY — model=${JSON.stringify(smallModel)} cwd=${cwd}`);
   // Step 1: Get compile manifest
   const manifest = await runForgeScript(["compile-prep"], cwd);
-  if (!manifest || manifest.includes("Entries-found: 0")) return false;
+  if (!manifest || manifest.includes("Entries-found: 0")) {
+    compileLog(`autoCompile EXIT — no manifest or zero entries`);
+    return false;
+  }
 
   // Step 2: Read existing topic files for full context
   const wikiDir = await resolveWikiDir(cwd);
@@ -452,13 +531,17 @@ async function autoCompile(client, cwd, smallModel) {
       }
     }
 
+    const disabledTools = await buildDisabledTools(client);
+    compileLog(`compile PROMPT begin — session=${childSessionId} model=${JSON.stringify(smallModel || DEFAULT_SMALL_MODEL)} disabledToolsCount=${disabledTools ? Object.keys(disabledTools).length : "null"}`);
     const result = await client.session.prompt({
       responseStyle: "data",
       throwOnError: true,
       path: { id: childSessionId },
       query: { directory: cwd },
       body: {
-        ...(smallModel ? { model: smallModel } : {}),
+        model: smallModel || DEFAULT_SMALL_MODEL,
+        agent: COMPILE_AGENT,
+        ...(disabledTools ? { tools: disabledTools } : {}),
         system:
           "You are a knowledge compiler. You read journal entries and synthesize " +
           "durable insights into structured topic categories. " +
@@ -495,10 +578,14 @@ async function autoCompile(client, cwd, smallModel) {
       .join("")
       .trim();
 
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return false;
-    synthesized = JSON.parse(match[0]);
-  } catch {
+    compileLog(`compile PROMPT done — partsCount=${parts.length} textLen=${text.length} preview=${JSON.stringify(text.slice(0, 200))}`);
+    synthesized = extractJsonObject(text);
+    if (!synthesized) {
+      compileLog(`compile NO JSON MATCH — returning false`);
+      return false;
+    }
+  } catch (err) {
+    compileLog(`autoCompile ERROR: ${err?.message || err}\n${err?.stack || ""}\nchildSessionId=${childSessionId}`);
     return false;
   } finally {
     if (childSessionId) {
@@ -514,6 +601,14 @@ async function autoCompile(client, cwd, smallModel) {
   const VALID_TOPICS = new Set(["gotchas", "patterns", "decisions", "tools"]);
   const dateStr = new Date().toISOString().slice(0, 10);
   let entriesAdded = 0;
+  let writeFailed = false;
+  const normalizeEntry = (s) =>
+    s
+      .replace(/^-\s*/, "")
+      .replace(/\*\*\d{4}-\d{2}-\d{2}\*\*\s*/, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
 
   for (const [topic, entries] of Object.entries(synthesized)) {
     if (!VALID_TOPICS.has(topic)) continue; // whitelist guard — prevent path traversal
@@ -565,8 +660,19 @@ async function autoCompile(client, cwd, smallModel) {
 
     if (newLines.length === 0) continue;
 
-    lines.splice(insertIdx, 0, ...newLines, "");
-    entriesAdded += newLines.length;
+    // Programmatic dedup: skip entries whose normalized text already exists in
+    // this topic file. Makes retries (after set-compiled failure or partial
+    // write) safe against duplication, since LLM-only dedup is not guaranteed.
+    const existingNorm = new Set(
+      lines.filter((l) => l.startsWith("- ")).map(normalizeEntry),
+    );
+    const dedupedNewLines = newLines.filter(
+      (l) => !existingNorm.has(normalizeEntry(l)),
+    );
+    if (dedupedNewLines.length === 0) continue;
+
+    lines.splice(insertIdx, 0, ...dedupedNewLines, "");
+    entriesAdded += dedupedNewLines.length;
 
     // Strip trailing blank lines to prevent accumulation across compiles
     while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
@@ -574,12 +680,17 @@ async function autoCompile(client, cwd, smallModel) {
 
     try {
       writeFileSync(fp, lines.join("\n"));
-    } catch {
-      /* best-effort */
+    } catch (err) {
+      writeFailed = true;
+      compileLog(`compile WRITE FAILED ${fp}: ${err?.message || err}`);
     }
   }
 
   if (entriesAdded === 0) return false;
+  if (writeFailed) {
+    compileLog(`compile WRITE FAILED — not advancing set-compiled`);
+    return false;
+  }
 
   // Step 5: set-compiled + generate-inject
   const setResult = await runForgeScript(["set-compiled"], cwd);
@@ -639,7 +750,7 @@ function fillStub(
   for (const [key, items] of Object.entries(markers)) {
     for (const item of items) {
       insightLines.push(
-        `- [${key.replace("_", "-")}][confidence:${t1Confidence}] ${item}`,
+        `- [${key.replace(/_/g, "-")}][confidence:${t1Confidence}] ${item}`,
       );
     }
   }
@@ -650,7 +761,7 @@ function fillStub(
       for (const item of items ?? []) {
         if (item && !insightLines.some((l) => l.includes(item.slice(0, 30)))) {
           insightLines.push(
-            `- [${key.replace("_", "-")}][confidence:medium] ${item}`,
+            `- [${key.replace(/_/g, "-")}][confidence:medium] ${item}`,
           );
         }
       }
@@ -806,8 +917,14 @@ const server = async ({ client, directory }) => {
     } catch { /* best-effort — never block startup */ }
   }
 
-  let smallModel = null;
+  let smallModel = DEFAULT_SMALL_MODEL;
+  // `seen`: sessions whose journaling fully succeeded (never retried).
+  // `inFlight`: sessions currently being journaled (concurrency guard).
+  // A session is promoted to `seen` ONLY after fillStub succeeds, so transient
+  // failures leave it eligible for retry on a later idle event.
   const seen = new Set();
+  const inFlight = new Set();
+  let lastCompileAttempt = 0;
 
   // ── Auto-injection state ──────────────────────────────────────────────────
   // Cached inject content — loaded lazily on first system.transform call.
@@ -845,7 +962,9 @@ const server = async ({ client, directory }) => {
 
       cachedInjectContent = parts.length > 0 ? parts.join("\n\n---\n\n") : "";
     } catch (err) {
-      cachedInjectContent = "";
+      // On a refresh failure, keep previously-good content rather than wiping
+      // it; only fall back to empty on the very first load.
+      if (cachedInjectContent == null) cachedInjectContent = "";
       if (FORGE_DEBUG) try {
         appendFileSync(
           join(HOME, ".local/share/opencode-forge/inject-debug.log"),
@@ -857,14 +976,18 @@ const server = async ({ client, directory }) => {
 
   async function loadInjectOnce() {
     if (!injectPromise) {
-      injectPromise = doLoadInject();
+      // Reset on rejection so a transient failure doesn't permanently cache a
+      // rejected promise and break injection for the plugin's lifetime.
+      injectPromise = doLoadInject().catch(() => {
+        injectPromise = null;
+      });
     }
     await injectPromise;
   }
 
   return {
     config: (cfg) => {
-      smallModel = cfg?.small_model ?? null;
+      smallModel = parseModelRef(cfg?.small_model) ?? DEFAULT_SMALL_MODEL;
     },
 
     // ── Auto-injection hook ───────────────────────────────────────────────────
@@ -909,7 +1032,7 @@ const server = async ({ client, directory }) => {
     event: async ({ event }) => {
       if (event?.type !== "session.idle") return;
       const sessionID = event.properties?.sessionID;
-      if (!sessionID || seen.has(sessionID)) return;
+      if (!sessionID || seen.has(sessionID) || inFlight.has(sessionID)) return;
 
       let toolCalls = 0;
       try {
@@ -925,7 +1048,7 @@ const server = async ({ client, directory }) => {
         return;
       }
 
-      seen.add(sessionID);
+      inFlight.add(sessionID);
 
       try {
         const messages = await getMessages(client, sessionID);
@@ -983,6 +1106,10 @@ const server = async ({ client, directory }) => {
           summaryConfidence,
         );
 
+        // Journaling succeeded — mark seen so this session is never re-journaled.
+        // (Reaching here means stub created + filled without throwing.)
+        seen.add(sessionID);
+
         client.tui
           .showToast({
             body: {
@@ -997,7 +1124,8 @@ const server = async ({ client, directory }) => {
         // ── Auto-compile: trigger after journaling if threshold met ──────────
         try {
           const { needed } = await checkCompileNeeded(directory);
-          if (needed) {
+          if (needed && Date.now() - lastCompileAttempt >= COMPILE_COOLDOWN_MS) {
+            lastCompileAttempt = Date.now();
             const compiled = await autoCompile(client, directory, smallModel);
             if (compiled) {
               // Refresh cached inject content for next session
@@ -1021,6 +1149,10 @@ const server = async ({ client, directory }) => {
         }
       } catch {
         /* silent failure — best-effort */
+      } finally {
+        // Always release the concurrency guard. If journaling failed before
+        // seen.add, the session stays eligible for retry on a later idle event.
+        inFlight.delete(sessionID);
       }
     },
   };

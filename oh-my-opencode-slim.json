@@ -3,10 +3,10 @@
   "preset": "mechanicus",
   "presets": {
     "mechanicus": {
-      "orchestrator": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "variant": "max", "displayName": "Magos-Dominus", "skills": ["forge-memory", "subagent-contracts", "investigate-issue", "xpu-remote-host"], "mcps": ["*", "!context7"] },
+      "orchestrator": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "variant": "max", "displayName": "Magos-Dominus", "skills": ["*"], "mcps": ["*", "!context7"] },
       "oracle": { "model": "amazon-bedrock/global.anthropic.claude-opus-4-6-v1", "variant": "high", "displayName": "Logis-Magna", "skills": ["simplify"], "mcps": [] },
       "librarian": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "displayName": "Lexmechanic", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
-      "explorer": { "model": "github-copilot/grok-code-fast-1", "variant": "low", "displayName": "Skitarii", "skills": [], "mcps": [] },
+      "explorer": { "model": "amazon-bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0", "variant": "low", "displayName": "Skitarii", "skills": [], "mcps": [] },
       "fixer": { "model": "amazon-bedrock/global.anthropic.claude-sonnet-4-6", "displayName": "Magos-Fabricator", "skills": [], "mcps": [] },
       "designer": { "model": "google-vertex/gemini-3.1-pro-preview", "variant": "high", "displayName": "Artisan-Aesthetica", "skills": [], "mcps": [] },
       "observer": { "model": "google-vertex/gemini-3.1-pro-preview", "displayName": "Omnispex-Adept", "skills": [], "mcps": [] },
