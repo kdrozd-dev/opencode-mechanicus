@@ -5,6 +5,13 @@
   "enabled": true,
   "debug": false,
 
+  // ─── Auto-Update: DISABLED ───────────────────────────────────────────────
+  // The self-updater deletes its install "wrapper dir" on a new release. When
+  // loaded via ./node_modules path, that wrapper resolved to .config/opencode
+  // itself — and wiped it (2026-06-17). Now installed by bare name (opencode's
+  // throwaway package cache) AND auto-update off: belt-and-suspenders.
+  "autoUpdate": false,
+
   // ─── Autonomous Mode ──────────────────────────────────────────────────────
   // Model receives soft compression nudges at threshold boundaries.
   // With allowSubAgents enriching every request, manualMode stays off.

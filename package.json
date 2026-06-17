@@ -1,8 +1,6 @@
 {
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.48",
-    "@opencode-ai/plugin": "^1.15.13",
-    "@tarquinen/opencode-dcp": "^3.1.12",
-    "oh-my-opencode-slim": "^1.1.1"
+    "@opencode-ai/plugin": "^1.15.13"
   }
 }

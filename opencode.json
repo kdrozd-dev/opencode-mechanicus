@@ -9,10 +9,10 @@
     "google-vertex"
   ],
   "plugin": [
-    "./node_modules/oh-my-opencode-slim",
-    "./node_modules/@tarquinen/opencode-dcp",
+    "oh-my-opencode-slim@1.1.1",
+    "@tarquinen/opencode-dcp@3.1.12",
     "./forge-memory-plugin",
-    "cc-safety-net"
+    "cc-safety-net@1.0.6"
   ],
   "compaction": {
     "reserved": 32000,
